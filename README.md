@@ -8,11 +8,6 @@
 [![Inference](https://img.shields.io/badge/Inference-Groq%20LLaMA%203.3%2070B-purple.svg)](https://groq.com)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Build Arena Hackathon — Problem Statement 2:** No-Code Voice AI Agent Builder  
-> **Theme:** Voice AI for Everyone  
-> **Core Technology Partner:** ElevenLabs (ElevenAgents, Text to Speech, Speech to Text, Voice Cloning)
-
----
 
 ## Table of Contents
 
