@@ -39,7 +39,7 @@ class Settings(BaseSettings):
 
     # Groq LLM
     groq_api_key: Optional[str] = Field(default=None, alias="GROQ_API_KEY")
-    groq_model: str = Field(default="openai/gpt-oss-120b", alias="GROQ_MODEL")
+    groq_model: str = Field(default="qwen/qwen3.8-27b", alias="GROQ_MODEL")
 
     # ElevenLabs
     elevenlabs_api_key: Optional[str] = Field(default=None, alias="ELEVENLABS_API_KEY")

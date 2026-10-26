@@ -1,4 +1,5 @@
 import math
+import re
 import uuid
 from typing import Any, Dict, List, Optional
 
@@ -11,6 +12,26 @@ from app.knowledge.embeddings import generate_embeddings
 
 # In-memory vector store fallback for local development/testing without external Qdrant cluster
 _in_memory_vectors: List[Dict[str, Any]] = []
+
+_STOPWORDS = {
+    "a", "an", "the", "in", "on", "at", "to", "for", "of", "with", "by", "from",
+    "i", "you", "he", "she", "it", "we", "they", "me", "my", "your", "our",
+    "how", "many", "much", "what", "where", "when", "why", "who", "which",
+    "can", "could", "should", "would", "is", "are", "was", "were", "do", "does", "did",
+}
+
+
+def _calculate_lexical_overlap(query: str, text: str) -> float:
+    """Fast, zero-RAM lexical relevance score for hybrid search."""
+    q_tokens = [w for w in re.findall(r"\b\w+\b", query.lower()) if w not in _STOPWORDS and len(w) > 1]
+    if not q_tokens:
+        q_tokens = [w for w in re.findall(r"\b\w+\b", query.lower()) if len(w) > 1]
+    if not q_tokens:
+        return 0.0
+
+    text_lower = text.lower()
+    matches = sum(1 for w in q_tokens if w in text_lower)
+    return matches / len(q_tokens)
 
 
 def _cosine_similarity(vec1: List[float], vec2: List[float]) -> float:
@@ -124,7 +145,7 @@ class QdrantRetriever:
         top_k: int = 3,
         threshold: float = 0.5,
     ) -> List[Dict[str, Any]]:
-        """Search relevant document chunks strictly scoped by owner_id and agent_id."""
+        """Search relevant document chunks strictly scoped by owner_id and agent_id using Hybrid Fusion."""
         query_vector = generate_embeddings([query])[0]
         results = []
 
@@ -135,50 +156,84 @@ class QdrantRetriever:
                     models.FieldCondition(key="agent_id", match=models.MatchValue(value=agent_id)),
                 ]
             )
-            if hasattr(client, "query_points"):
-                response = await client.query_points(
-                    collection_name=self.collection_name,
-                    query=query_vector,
-                    query_filter=filter_condition,
-                    limit=top_k,
-                    score_threshold=threshold,
-                    with_payload=True,
-                )
-                hits = response.points
-            else:
-                hits = await client.search(
-                    collection_name=self.collection_name,
-                    query_vector=query_vector,
-                    query_filter=filter_condition,
-                    limit=top_k,
-                    score_threshold=threshold,
-                )
-            for hit in hits:
-                payload = hit.payload or {}
-                results.append(
-                    {
-                        "chunk_id": str(hit.id),
-                        "score": round(hit.score, 4),
-                        "text": payload.get("text", ""),
-                        "filename": payload.get("filename", ""),
-                        "source_id": payload.get("source_id", ""),
-                    }
-                )
-            return results
+
+            # 1. Fetch dense candidates from Qdrant
+            dense_scores: Dict[str, float] = {}
+            try:
+                if hasattr(client, "query_points"):
+                    response = await client.query_points(
+                        collection_name=self.collection_name,
+                        query=query_vector,
+                        query_filter=filter_condition,
+                        limit=top_k * 2,
+                        with_payload=True,
+                    )
+                    dense_hits = response.points
+                else:
+                    dense_hits = await client.search(
+                        collection_name=self.collection_name,
+                        query_vector=query_vector,
+                        query_filter=filter_condition,
+                        limit=top_k * 2,
+                    )
+                for hit in dense_hits:
+                    dense_scores[str(hit.id)] = float(hit.score)
+            except Exception as dense_err:
+                logger.debug("Dense query points note: %s", str(dense_err))
+
+            # 2. Fetch candidate chunks for this agent to perform hybrid lexical scoring
+            scroll_res = await client.scroll(
+                collection_name=self.collection_name,
+                scroll_filter=filter_condition,
+                limit=50,
+                with_payload=True,
+            )
+            candidate_points = scroll_res[0] if scroll_res else []
+
+            # 3. Fuse scores (Dense + Lexical)
+            fused_candidates = []
+            for p in candidate_points:
+                point_id = str(p.id)
+                payload = p.payload or {}
+                text = payload.get("text", "")
+                dense_score = dense_scores.get(point_id, 0.0)
+                lex_score = _calculate_lexical_overlap(query, text)
+
+                # Hybrid fusion: maximum of pure dense, pure lexical, or combined
+                combined_score = max(dense_score, lex_score, 0.5 * dense_score + 0.5 * lex_score)
+                effective_threshold = min(threshold, 0.20)
+
+                if combined_score >= effective_threshold:
+                    fused_candidates.append(
+                        {
+                            "chunk_id": point_id,
+                            "score": round(combined_score, 4),
+                            "text": text,
+                            "filename": payload.get("filename", ""),
+                            "source_id": payload.get("source_id", ""),
+                        }
+                    )
+
+            fused_candidates.sort(key=lambda x: x["score"], reverse=True)
+            return fused_candidates[:top_k]
+
         except Exception as exc:
             logger.warning("Qdrant search fell back to in-memory store: %s", str(exc))
-            # Fallback to in-memory vector search
+            # Fallback to in-memory vector search with hybrid scoring
             matches = []
             for item in _in_memory_vectors:
                 p = item["payload"]
                 if p.get("owner_id") == owner_id and p.get("agent_id") == agent_id:
-                    score = _cosine_similarity(query_vector, item["vector"])
-                    if score >= threshold:
+                    text = p.get("text", "")
+                    dense_score = _cosine_similarity(query_vector, item["vector"])
+                    lex_score = _calculate_lexical_overlap(query, text)
+                    combined_score = max(dense_score, lex_score, 0.5 * dense_score + 0.5 * lex_score)
+                    if combined_score >= min(threshold, 0.20):
                         matches.append(
                             {
                                 "chunk_id": item["id"],
-                                "score": round(score, 4),
-                                "text": p.get("text", ""),
+                                "score": round(combined_score, 4),
+                                "text": text,
                                 "filename": p.get("filename", ""),
                                 "source_id": p.get("source_id", ""),
                             }

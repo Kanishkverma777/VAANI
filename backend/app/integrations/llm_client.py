@@ -135,7 +135,17 @@ class LLMClient:
                     temperature=temperature,
                     max_tokens=max_tokens,
                 )
-                return (response.choices[0].message.content or "").strip()
+                choice = response.choices[0]
+                content = (choice.message.content or "").strip()
+                if not content and hasattr(choice.message, "reasoning") and choice.message.reasoning:
+                    # Fallback for reasoning models if all tokens were spent in reasoning
+                    reasoning_text = (choice.message.reasoning or "").strip()
+                    if reasoning_text:
+                        lines = [line.strip() for line in reasoning_text.splitlines() if line.strip()]
+                        if lines:
+                            content = lines[-1].strip('"\'. ')
+                if content:
+                    return content
             except RateLimitError:
                 if attempt < retries - 1:
                     await asyncio.sleep(1.0 * (attempt + 1))
