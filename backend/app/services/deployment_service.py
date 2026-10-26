@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 from typing import Optional
 
 from app.config import settings
-from app.core.exceptions import NotFoundException, ProviderException
+from app.core.exceptions import NotFoundException, PermissionDeniedException, ProviderException
 from app.core.logging import logger
 from app.integrations.elevenlabs_client import (
     ElevenLabsClient,
@@ -61,10 +61,11 @@ class DeploymentService:
                         name=agent["name"],
                         config=config,
                     )
-                except NotFoundException:
+                except (NotFoundException, PermissionDeniedException, ProviderException) as remote_err:
                     logger.warning(
-                        "Remote agent %s no longer exists on ElevenLabs (404). Re-provisioning new agent...",
+                        "Remote agent %s inaccessible on current ElevenLabs key (%s). Re-provisioning new agent on new account...",
                         provider_agent_id,
+                        remote_err,
                     )
                     provider_agent_id = await self.client.create_agent(
                         name=agent["name"],

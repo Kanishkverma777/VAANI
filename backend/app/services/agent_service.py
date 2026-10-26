@@ -158,18 +158,46 @@ class AgentService:
 
         # Auto-sync configuration updates (language, prompts, welcome_message) to ElevenLabs remote agent
         elevenlabs_id = existing.get("elevenlabs_agent_id") or existing.get("provider_agent_id")
-        if elevenlabs_id and data.configuration is not None:
-            try:
-                await self.elevenlabs_client.update_agent(
-                    provider_agent_id=elevenlabs_id,
-                    name=update_fields.get("name", existing.get("name", "Voice Agent")),
-                    config=data.configuration,
-                )
-                logger.info("Auto-synchronized updated configuration to ElevenLabs agent %s", elevenlabs_id)
-                # Keep active status since remote ElevenLabs agent is up to date
-                update_fields["status"] = AgentStatusEnum.ACTIVE.value
-            except Exception as sync_err:
-                logger.warning("Could not auto-sync update to ElevenLabs agent %s: %s", elevenlabs_id, sync_err)
+        if data.configuration is not None:
+            agent_name = update_fields.get("name", existing.get("name", "Voice Agent"))
+            if elevenlabs_id:
+                try:
+                    await self.elevenlabs_client.update_agent(
+                        provider_agent_id=elevenlabs_id,
+                        name=agent_name,
+                        config=data.configuration,
+                    )
+                    logger.info("Auto-synchronized updated configuration to ElevenLabs agent %s", elevenlabs_id)
+                    update_fields["status"] = AgentStatusEnum.ACTIVE.value
+                except Exception as sync_err:
+                    logger.warning(
+                        "Remote agent %s inaccessible on current ElevenLabs key (%s). Re-provisioning on new account...",
+                        elevenlabs_id,
+                        sync_err,
+                    )
+                    try:
+                        new_provider_id = await self.elevenlabs_client.create_agent(
+                            name=agent_name,
+                            config=data.configuration,
+                        )
+                        update_fields["elevenlabs_agent_id"] = new_provider_id
+                        update_fields["provider_agent_id"] = new_provider_id
+                        update_fields["status"] = AgentStatusEnum.ACTIVE.value
+                        logger.info("Successfully re-provisioned agent with new ElevenLabs ID %s", new_provider_id)
+                    except Exception as create_err:
+                        logger.error("Failed to re-provision agent on ElevenLabs: %s", create_err)
+            else:
+                try:
+                    new_provider_id = await self.elevenlabs_client.create_agent(
+                        name=agent_name,
+                        config=data.configuration,
+                    )
+                    update_fields["elevenlabs_agent_id"] = new_provider_id
+                    update_fields["provider_agent_id"] = new_provider_id
+                    update_fields["status"] = AgentStatusEnum.ACTIVE.value
+                    logger.info("Provisioned new ElevenLabs agent with ID %s", new_provider_id)
+                except Exception as create_err:
+                    logger.error("Failed to provision new agent on ElevenLabs: %s", create_err)
 
         updated = await self.agent_repo.update_agent(
             agent_id=agent_id,

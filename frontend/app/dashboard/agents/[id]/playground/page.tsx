@@ -205,7 +205,7 @@ function VoicePlaygroundContent() {
 
         let isValid = false;
 
-        // Verify if remote agent ID actually exists and has widget_config
+        // Verify if remote agent ID actually exists and has widget_config matching current language
         if (currentElevenLabsId) {
           try {
             const checkRes = await fetch(
@@ -214,7 +214,12 @@ function VoicePlaygroundContent() {
             if (checkRes.ok) {
               const widgetData = await checkRes.json();
               if (widgetData?.widget_config) {
-                isValid = true;
+                const remoteLang = widgetData.widget_config.language;
+                const localLang = (fetched.configuration?.language === 'hi-en' ? 'hi' : fetched.configuration?.language) || 'en';
+                // Only consider valid if the remote ElevenLabs widget matches the configured language
+                if (!remoteLang || remoteLang === localLang) {
+                  isValid = true;
+                }
               }
             }
           } catch {
