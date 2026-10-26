@@ -1,0 +1,187 @@
+{
+ "version": 1,
+ "kind": "app",
+ "at": "2026-10-25T06:43:58.050Z",
+ "seed": 323264218,
+ "input": {
+  "kind": "devtools",
+  "brief": "Conversational Voice AI agent platform powered by ElevenLabs",
+  "theme": "dark",
+  "screens": [
+   "overview",
+   "builder",
+   "analytics",
+   "settings"
+  ],
+  "keep": [],
+  "style": null
+ },
+ "style": {
+  "id": "true-black-flat",
+  "name": "True-black flat",
+  "theme": "dark",
+  "basis": "5 screens: an events back office, an event analytics tab, a community overview, an artist studio home, an artist insights page",
+  "suits": [
+   "community",
+   "creator",
+   "markets"
+  ],
+  "idea": "Night mode on true black: sidebar, top bar and page share one ground, elevation is a lightness step alone, and colour is confined to data marks.",
+  "colourBudget": "at or under 3%; the accent never touches buttons, tabs or nav",
+  "tokens": {
+   "ground": "#000000",
+   "surface": "#111111",
+   "raised": "#2a2a2a",
+   "border": "#1a1a1a",
+   "rule": "#161616",
+   "control": "#444444",
+   "text": "#ffffff",
+   "muted": "#b4b4b4",
+   "faint": "#949494",
+   "accent": "#c6f24e",
+   "positive": "#c6f24e",
+   "negative": "#e5484d",
+   "warning": "#e5a93b",
+   "chart": [
+    "#c6f24e",
+    "#e6e6e6",
+    "#6b6b6b"
+   ],
+   "pills": {
+    "positive": [
+     "#222a10",
+     "#c6f24e"
+    ],
+    "negative": [
+     "#2c1a20",
+     "#e5566f"
+    ],
+    "warning": [
+     "#2b2414",
+     "#e5a93b"
+    ],
+    "neutral": [
+     "#222222",
+     "#ffffff"
+    ]
+   },
+   "radius": {
+    "card": 20,
+    "control": 999
+   },
+   "font": {
+    "family": "Inter",
+    "second": null,
+    "fallback": "system-ui, sans-serif",
+    "sizes": {
+     "title": 20,
+     "section": 16,
+     "kpi": 24,
+     "body": 14,
+     "small": 12
+    },
+    "weights": [
+     400,
+     500,
+     600
+    ],
+    "note": "Nothing above 600; inactive nav labels #bbb, active #fff."
+   },
+   "density": "medium",
+   "rowHeight": 80,
+   "sidebarWidth": 210,
+   "gap": 14,
+   "pad": 22,
+   "controlHeight": 36
+  },
+  "shell": "ruled-t-frame",
+  "shellAlternatives": [
+   "no-sidebar"
+  ],
+  "signature": "Elevation by lightness alone (#000 ground, #111 card, #2a2a2a nested panel) with no borders or shadows on cards; the active nav item is marked only by its label going from #bbb to #fff; the primary control is made primary by inversion, a white 36px pill with black text.",
+  "identity": [
+   "The one data hue from the product's world in place of the dealt lime: a solar amber (#f2b33d) for an energy home, a sky blue (#4cb3f0) for water or weather, a lime only for sport. It is still the only hue on data and never touches buttons, tabs or nav. A green or yellow-green hue is also --positive; an amber that sits beside --warning leaves the warning to its pill pair.",
+   "A ground with the product's temperature: the studied #000 for media and events, a warm near-black (#0e0d0c) for a home, a cool one (#0c0d0f) for a monitor, with cards one lightness step above it (#181716, #15171a). Never navy or slate.",
+   "A signature element from the product's world as the lead: the energy home's power flow (sun, house, battery and grid with their live kW), an event's doors against capacity, an artist's release with its cover."
+  ],
+  "avoid": [
+   "a navy or slate dark theme",
+   "glow, neon borders or shadows",
+   "a hue per chart (five hues across four charts was flagged)",
+   "the accent on buttons, tabs or nav",
+   "a 64px top bar left empty across most of its width (flagged twice)"
+  ],
+  "notes": "The studied screens of this kind used a violet-magenta (#dd6cff) and an orange (#ff5500) as their one data hue. The library deals a lime, which keeps the move and stays clear of the violet ban; because the lime is a yellow-green, it is also the positive colour (a second, mint green beside it read as two greens). The greys are #b4b4b4 for secondary text and #949494 for meta, 32 levels apart rather than the 20 of the measured #aaa and #969696, which read as one grey; #949494 still holds 4.5:1 on the #2a2a2a nested panel."
+ },
+ "shell": {
+  "id": "ruled-t-frame",
+  "name": "Ruled T-frame",
+  "basis": "4 of 23 screens (3 dark, 1 light)",
+  "suits": [
+   "community",
+   "creator",
+   "smb-admin"
+  ],
+  "numbers": {
+   "sidebarWidth": "210-240",
+   "topBar": "64px with a 1px bottom rule",
+   "rules": "1px; #1a1a1a on #000, #f2f2f2 on white",
+   "navPitch": "34 (dark) or 40 (light)",
+   "switcher": "at the top bar's right end, behind a full-height 1px divider",
+   "contentGutter": "29px from the sidebar rule and the window edge"
+  },
+  "blueprint": "A 210-240px sidebar and a 64px top bar share one ground, divided only by 1px rules. The workspace or community switcher sits at the right end of the top bar behind a full-height divider; the sidebar holds the wordmark and the nav on a 34px pitch with sentence-case group labels. On dark, the active item is its label going from #bbb to #fff. The top bar must carry something real (search, the back link and object name, the switcher): two studied screens left about 1070px of it blank and were flagged.",
+  "phone": "The top bar stays at 48-56px with the switcher reduced to its mark; the sidebar becomes a full-screen menu sheet or a bottom bar of four or five destinations."
+ },
+ "screens": [
+  {
+   "name": "overview",
+   "pattern": {
+    "id": "deploy-health-lead",
+    "name": "Current deploy and health lead",
+    "screen": "overview",
+    "kinds": [
+     "devtools"
+    ],
+    "basis": "house pattern from testing: built after a flat 24-hour chart filled a whole first screen and lost to a richer layout",
+    "blueprint": "Title row: the project's name as the h1 with a status pill (Healthy, Degraded) and a breadcrumb of team and product above it; repository, branch and a freshness stamp in a 14px grey line under it; the one primary action (Redeploy, or View logs when the latest deploy failed) on the right. Then a full-width card for what is live now: the production deployment's commit message at 16/600, its branch, short SHA in mono, author and age on the left, and three or four facts in divided cells on the right (domain, live since, build time, regions). Then the health strip: three or four KPIs in one divided container, each with its change in words and in the polarity colour when it moved the wrong way. Then a two-column row: the 24-hour chart at two-thirds (deploy markers as 1px ticks with their short SHA, the budget or SLO as a dashed reference line) and, at one-third, the block that explains the worst number (the spike and what reverted it, the status codes behind the error rate). Then the deployments table capped at 6 rows, a failed row carrying its failing step and a View logs action, a building row its elapsed time.",
+    "phone": "The live deployment card becomes a stack of label-value rows; the KPIs a 2x2 grid; the chart full width with its markers; the explanation under it; deployments as two-line rows with region and duration on line 2."
+   }
+  },
+  {
+   "name": "builder",
+   "pattern": null
+  },
+  {
+   "name": "analytics",
+   "pattern": {
+    "id": "research-lists-table",
+    "name": "Research lists and a long table",
+    "screen": "analytics",
+    "kinds": [
+     "markets",
+     "devtools"
+    ],
+    "basis": "a stock research view",
+    "blueprint": "Header: a 26/700 title over a 20px grey date, quiet pill buttons on the right; a 1px rule about 44px below, with the tabs just under it and the active tab marked by a 1px accent line as wide as its label lying on that rule. 64px below, a 2-column row of cards at about 43/57 with a 24px gap: a ranked list on a 28px pitch (16px logo, bold ticker, grey name truncated, a right-aligned grey percentage and a white value, signs in the text) and a chart card with its legend in the header (5px dots, 13px grey labels), a text range selector under the baseline (1M 3M 6M YTD All, the active one marked by the same 1px accent segment) and 'Updated daily' in 11-12px grey. Then a 20/400 grey section title and a full-width table: a 38px header of 11-12px grey labels, 42px rows over 1px rules, ISO dates and every figure right-aligned in tabular numerals, white only for the identity and the total. Give the chart a y-scale and dates (the studied chart had neither and was flagged).",
+    "phone": "Cards stack; the range selector stays as text under the chart; the table becomes two-line rows with the total on the right."
+   }
+  },
+  {
+   "name": "settings",
+   "pattern": {
+    "id": "settings-with-usage",
+    "name": "Settings with usage on top",
+    "screen": "settings",
+    "kinds": [
+     "devtools",
+     "smb-admin",
+     "support"
+    ],
+    "basis": "one settings page",
+    "blueprint": "Use this only when usage is the question of the view (a plan, billing or quota view), and show only numbers no section below repeats, at a size below the h1. When a settings screen also reports usage, put 3-4 usage numbers in one row on top (a 14px grey label, a 30px regular value, a 12px change pinned to the card bottom with its window in words, a grey dash where there is no comparison) and link out to the analytics screen ('View more') instead of drawing a chart. Below, the two-column settings rows. One dark primary per screen. Keep upsell to one surface: the studied settings page carried three nags (a top banner, a setup button and a gated strip) and was flagged for it.",
+    "phone": "The usage row becomes a 2-column grid of label-value pairs; settings rows stack."
+   }
+  }
+ ]
+}

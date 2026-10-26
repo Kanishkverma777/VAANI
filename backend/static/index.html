@@ -1,0 +1,2091 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VAANI — Conversational Voice AI Platform</title>
+  <meta name="description" content="Lovable + ElevenLabs inspired platform to build, benchmark, test live, and deploy conversational voice agents.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <script src="https://elevenlabs.io/convai-widget/index.js" async type="text/javascript"></script>
+  <style>
+    :root {
+      --bg-base: #000000;
+      --bg-surface: #0A0A0A;
+      --bg-surface-elevated: #111111;
+      --bg-surface-hover: #18181B;
+      --border-subtle: #222222;
+      --border-focus: #52525B;
+      --primary: #FFFFFF;
+      --primary-hover: #E4E4E7;
+      --accent-cyan: #A1A1AA;
+      --accent-emerald: #10B981;
+      --accent-rose: #EF4444;
+      --accent-amber: #F59E0B;
+      --accent-violet: #A1A1AA;
+      --text-main: #FAFAFA;
+      --text-muted: #A1A1AA;
+      --text-dim: #71717A;
+      --gradient-brand: #FFFFFF;
+      --glow-brand: none;
+      --radius-sm: 6px;
+      --radius-md: 8px;
+      --radius-lg: 12px;
+      --radius-xl: 16px;
+      --sidebar-width: 250px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-base);
+      color: var(--text-main);
+      min-height: 100vh;
+      line-height: 1.5;
+      overflow-x: hidden;
+    }
+
+    /* Typography */
+    h1, h2, h3, h4, .brand-title, .metric-value {
+      font-family: 'Outfit', sans-serif;
+      letter-spacing: -0.02em;
+    }
+
+    code, pre, .font-mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .icon {
+      width: 1rem;
+      height: 1rem;
+      stroke: currentColor;
+      stroke-width: 2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      vertical-align: middle;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    /* Common Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.6rem 1.15rem;
+      border-radius: var(--radius-md);
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: #FFFFFF;
+      color: #000000;
+      border: 1px solid #FFFFFF;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #E4E4E7;
+      color: #000000;
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    .btn-secondary {
+      background: #111111;
+      border: 1px solid #222222;
+      color: #D4D4D8;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: #18181B;
+      border-color: #3F3F46;
+      color: #FFFFFF;
+    }
+
+    .btn-success {
+      background: #18181B;
+      border: 1px solid #27272A;
+      color: #FAFAFA;
+    }
+    .btn-success:hover:not(:disabled) {
+      background: #27272A;
+      color: #FFFFFF;
+      transform: translateY(-1px);
+    }
+
+    .btn-danger {
+      background: #18181B;
+      border: 1px solid #3F3F46;
+      color: #F87171;
+    }
+    .btn-danger:hover {
+      background: #27272A;
+      color: #FCA5A5;
+    }
+
+    .btn-sm {
+      padding: 0.35rem 0.75rem;
+      font-size: 0.775rem;
+      border-radius: var(--radius-sm);
+    }
+
+    /* Tags */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 0.2rem 0.55rem;
+      border-radius: 999px;
+    }
+    .badge-cyan { background: #18181B; color: #E4E4E7; border: 1px solid #27272A; }
+    .badge-emerald { background: rgba(16, 185, 129, 0.1); color: #6EE7B7; border: 1px solid rgba(16, 185, 129, 0.25); }
+    .badge-indigo { background: #18181B; color: #E4E4E7; border: 1px solid #27272A; }
+    .badge-amber { background: rgba(245, 158, 11, 0.1); color: #FCD34D; border: 1px solid rgba(245, 158, 11, 0.25); }
+    .badge-rose { background: rgba(239, 68, 68, 0.1); color: #FCA5A5; border: 1px solid rgba(239, 68, 68, 0.25); }
+
+    /* Cards */
+    .card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    /* Form Controls */
+    .form-group { margin-bottom: 1.25rem; }
+    label {
+      display: block;
+      font-size: 0.775rem;
+      font-weight: 600;
+      color: #A1A1AA;
+      margin-bottom: 0.45rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    textarea, input[type="text"], input[type="email"], input[type="password"], input[type="search"], input[type="number"], select {
+      width: 100%;
+      background: #000000;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.75rem 1rem;
+      color: var(--text-main);
+      font-family: inherit;
+      font-size: 0.9rem;
+      outline: none;
+      transition: all 0.2s ease;
+    }
+    textarea:focus, input:focus, select:focus {
+      border-color: var(--border-focus);
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.08);
+    }
+    textarea { resize: vertical; min-height: 110px; }
+
+    /* ========================================================================= */
+    /* 1. PUBLIC LAYOUT (LANDING PAGE & AUTH) */
+    /* ========================================================================= */
+    .public-layout {
+      display: none;
+    }
+    .public-layout.active {
+      display: block;
+    }
+
+    .public-nav {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(18px);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 0.9rem 2.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      cursor: pointer;
+    }
+    .brand-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-md);
+      background: #FFFFFF;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .brand-icon svg { width: 18px; height: 18px; fill: #000000; }
+    .brand-title { font-size: 1.25rem; font-weight: 700; color: white; }
+
+    .public-links {
+      display: flex;
+      align-items: center;
+      gap: 1.8rem;
+    }
+    .public-link {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+    .public-link:hover { color: white; }
+
+    /* Landing Hero */
+    .landing-hero {
+      text-align: center;
+      padding: 5.5rem 1.5rem 4rem 1.5rem;
+      max-width: 960px;
+      margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 999px;
+      background: #111111;
+      border: 1px solid #222222;
+      color: #E4E4E7;
+      font-size: 0.8rem;
+      font-weight: 500;
+      margin-bottom: 1.75rem;
+    }
+
+    .landing-hero-title {
+      font-size: 4rem;
+      font-weight: 800;
+      line-height: 1.1;
+      margin-bottom: 1.5rem;
+      background: linear-gradient(180deg, #FFFFFF 40%, #A1A1AA 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    @media (max-width: 768px) { .landing-hero-title { font-size: 2.6rem; } }
+
+    .landing-hero-sub {
+      font-size: 1.25rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      max-width: 700px;
+      margin: 0 auto 2.5rem auto;
+    }
+
+    .landing-interactive-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-xl);
+      padding: 2rem;
+      margin: 3rem auto 0 auto;
+      max-width: 840px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+      text-align: left;
+    }
+
+    /* ========================================================================= */
+    /* 2. DASHBOARD SHELL LAYOUT (PERSISTENT SIDEBAR + CONTENT AREA) */
+    /* ========================================================================= */
+    .dashboard-layout {
+      display: none;
+      height: 100vh;
+      overflow: hidden;
+    }
+    .dashboard-layout.active {
+      display: flex;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: var(--sidebar-width);
+      background: #000000;
+      border-right: 1px solid var(--border-subtle);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex-shrink: 0;
+      height: 100vh;
+    }
+
+    .sidebar-header {
+      padding: 1.25rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .sidebar-nav {
+      padding: 1rem 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .nav-category {
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--text-dim);
+      padding: 0.6rem 0.75rem 0.3rem 0.75rem;
+      font-weight: 700;
+    }
+
+    .sidebar-item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.8rem;
+      color: #A1A1AA;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+    .sidebar-item:hover {
+      background: #111111;
+      color: #FFFFFF;
+    }
+    .sidebar-item.active {
+      background: #18181B;
+      color: #FFFFFF;
+      font-weight: 600;
+      border: 1px solid #27272A;
+    }
+    .sidebar-item svg { width: 16px; height: 16px; }
+
+    .sidebar-footer {
+      padding: 1rem;
+      border-top: 1px solid var(--border-subtle);
+    }
+    .sidebar-user {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0.5rem;
+      border-radius: var(--radius-sm);
+      background: #0A0A0A;
+      border: 1px solid var(--border-subtle);
+    }
+
+    /* Main Content Wrapper */
+    .dashboard-main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-base);
+    }
+
+    .top-bar {
+      height: 60px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: rgba(0, 0, 0, 0.9);
+      backdrop-filter: blur(14px);
+      padding: 0 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .page-container {
+      flex: 1;
+      overflow-y: auto;
+      padding: 2rem 2.5rem 4rem 2.5rem;
+    }
+
+    /* Sub-Pages within Dashboard */
+    .dashboard-page {
+      display: none;
+      animation: fadeIn 0.25s ease;
+    }
+    .dashboard-page.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Metric Cards Grid */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 1024px) { .metrics-grid { grid-template-columns: repeat(2, 1fr); } }
+
+    .metric-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 1.25rem 1.5rem;
+    }
+    .metric-label {
+      font-size: 0.775rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.35rem;
+    }
+    .metric-value {
+      font-size: 2.2rem;
+      font-weight: 800;
+      color: white;
+    }
+
+    /* Tables */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .data-table th, .data-table td {
+      padding: 0.85rem 1.15rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+    .data-table th {
+      font-size: 0.75rem;
+      color: var(--text-dim);
+      text-transform: uppercase;
+      background: rgba(14, 18, 28, 0.6);
+      font-weight: 700;
+    }
+    .data-table td { font-size: 0.875rem; }
+    .data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+
+    /* ========================================================================= */
+    /* 3. VOICE PLAYGROUND (3-PANEL INTERFACE) */
+    /* ========================================================================= */
+    .playground-container {
+      display: grid;
+      grid-template-columns: 280px 1fr 340px;
+      gap: 1.25rem;
+      height: calc(100vh - 150px);
+    }
+    @media (max-width: 1200px) {
+      .playground-container { grid-template-columns: 1fr; height: auto; }
+    }
+
+    .panel-box {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .panel-header {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-subtle);
+      font-size: 0.85rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #CBD5E1;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .panel-body {
+      padding: 1.25rem;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    /* Waveform Animation Canvas */
+    .waveform-visualizer {
+      width: 100%;
+      height: 120px;
+      background: rgba(10, 14, 22, 0.8);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      margin: 1.5rem 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .wave-bar {
+      width: 4px;
+      height: 20px;
+      background: #FFFFFF;
+      border-radius: 999px;
+      animation: wavePulse 1.2s infinite ease-in-out;
+    }
+    .wave-bar:nth-child(2) { animation-delay: 0.15s; }
+    .wave-bar:nth-child(3) { animation-delay: 0.3s; }
+    .wave-bar:nth-child(4) { animation-delay: 0.45s; }
+    .wave-bar:nth-child(5) { animation-delay: 0.6s; }
+    .wave-bar:nth-child(6) { animation-delay: 0.75s; }
+    .wave-bar:nth-child(7) { animation-delay: 0.9s; }
+    .wave-bar:nth-child(8) { animation-delay: 0.2s; }
+    .wave-bar:nth-child(9) { animation-delay: 0.5s; }
+
+    @keyframes wavePulse {
+      0%, 100% { height: 16px; opacity: 0.3; }
+      50% { height: 80px; opacity: 1; }
+    }
+
+    /* Chat bubble turns */
+    .transcript-bubble {
+      padding: 0.85rem 1rem;
+      border-radius: var(--radius-md);
+      font-size: 0.85rem;
+      margin-bottom: 0.75rem;
+      line-height: 1.45;
+    }
+    .transcript-bubble.user {
+      background: #111111;
+      margin-left: 1.5rem;
+      border: 1px solid var(--border-subtle);
+      color: #FAFAFA;
+    }
+    .transcript-bubble.ai {
+      background: #0A0A0A;
+      border: 1px solid #27272A;
+      margin-right: 1.5rem;
+      color: #FAFAFA;
+    }
+
+    /* Workspace Tabs */
+    .workspace-tabs {
+      display: flex;
+      gap: 0.5rem;
+      border-bottom: 1px solid var(--border-subtle);
+      margin-bottom: 1.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .ws-tab-btn {
+      background: transparent;
+      border: 1px solid transparent;
+      color: var(--text-muted);
+      font-family: inherit;
+      font-size: 0.85rem;
+      font-weight: 500;
+      padding: 0.45rem 0.95rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .ws-tab-btn:hover { color: white; background: #111111; }
+    .ws-tab-btn.active {
+      color: #000000;
+      background: #FFFFFF;
+      font-weight: 600;
+    }
+
+    /* Modal Backdrop */
+    .modal-backdrop {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.85);
+      backdrop-filter: blur(10px);
+      z-index: 1000;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .modal-backdrop.active { display: flex; animation: fadeIn 0.2s ease; }
+
+    .modal-box {
+      background: #0A0A0A;
+      border: 1px solid #222222;
+      border-radius: var(--radius-xl);
+      padding: 2.2rem;
+      width: 100%;
+      max-width: 500px;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 2rem;
+      right: 2rem;
+      z-index: 2000;
+      background: #0E121C;
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 0.85rem 1.4rem;
+      color: white;
+      font-size: 0.875rem;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+      display: none;
+    }
+    .toast.active { display: block; animation: fadeIn 0.2s ease; }
+    .toast.success { border-color: var(--accent-emerald); }
+    .toast.error { border-color: var(--accent-rose); }
+    .toast.info { border-color: var(--accent-cyan); }
+
+    /* Spinner */
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+
+  <!-- Lucide Icon Symbols Sprite (Pure SVG, Shadcn Standard) -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none;">
+    <defs>
+      <g id="icon-sparkles"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/><path d="M5 3v4"/><path d="M3 5h4"/></g>
+      <g id="icon-bar-chart"><rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/></g>
+      <g id="icon-zap"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></g>
+      <g id="icon-bot"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></g>
+      <g id="icon-volume-2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></g>
+      <g id="icon-book-open"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></g>
+      <g id="icon-line-chart"><path d="M3 3v18h18"/><path d="m19 9-5 5-4-4-3 3"/></g>
+      <g id="icon-settings"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></g>
+      <g id="icon-logout"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></g>
+      <g id="icon-headphones"><path d="M3 14h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7a9 9 0 0 1 18 0v7a2 2 0 0 1-2 2h-1a2 2 0 0 1-2-2v-3a2 2 0 0 1 2-2h3"/></g>
+      <g id="icon-calendar"><rect width="18" height="18" x="3" y="4" rx="2" ry="2"/><line x1="16" x2="16" y1="2" y2="6"/><line x1="8" x2="8" y1="2" y2="6"/><line x1="3" x2="21" y1="10" y2="10"/></g>
+      <g id="icon-briefcase"><rect width="20" height="14" x="2" y="7" rx="2" ry="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></g>
+      <g id="icon-utensils"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7"/></g>
+      <g id="icon-mic"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" x2="12" y1="19" y2="22"/></g>
+      <g id="icon-trash-2"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></g>
+      <g id="icon-rotate-cw"><path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/></g>
+      <g id="icon-play"><polygon points="6 3 20 12 6 21 6 3" fill="currentColor" stroke="none"/></g>
+      <g id="icon-upload"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></g>
+      <g id="icon-x"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></g>
+      <g id="icon-arrow-left"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></g>
+      <g id="icon-radio"><path d="M4.93 19.07a10 10 0 0 1 0-14.14"/><path d="M7.76 16.24a6 6 0 0 1 0-8.48"/><circle cx="12" cy="12" r="2"/><path d="M16.24 7.76a6 6 0 0 1 0 8.48"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></g>
+      <g id="icon-check"><polyline points="20 6 9 17 4 12"/></g>
+    </defs>
+  </svg>
+
+  <!-- ========================================================================= -->
+  <!-- 1. PUBLIC LAYOUT: LANDING PAGE (Route: /) -->
+  <!-- ========================================================================= -->
+  <div class="public-layout active" id="layout-public">
+    <!-- Navigation -->
+    <nav class="public-nav">
+      <div class="brand-group" onclick="navigate('/')">
+        <div class="brand-icon">
+          <svg viewBox="0 0 24 24"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+        </div>
+        <span class="brand-title">VAANI</span>
+      </div>
+
+      <div class="public-links">
+        <a href="#features" class="public-link">Features</a>
+        <a href="#demo" class="public-link">Interactive Demo</a>
+        <a href="#use-cases" class="public-link">Use Cases</a>
+        <button class="btn btn-secondary btn-sm" onclick="openAuthModal('signin')">Sign In</button>
+        <button class="btn btn-primary btn-sm" onclick="navigate('/dashboard/agents/new')">Get Started</button>
+      </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="landing-hero">
+      <div class="hero-badge">
+        <svg class="icon"><use href="#icon-sparkles"></use></svg>
+        <span>Lovable & ElevenLabs AI Platform</span>
+      </div>
+      <h1 class="landing-hero-title">
+        Your Voice AI Agent.<br>Built in Minutes.
+      </h1>
+      <p class="landing-hero-sub">
+        Describe your idea. Create a voice agent. Test it live with real WebRTC audio. Deploy it anywhere.
+      </p>
+
+      <div style="display:flex; justify-content:center; gap:1rem;">
+        <button class="btn btn-primary" onclick="navigate('/dashboard/agents/new')">
+          <svg class="icon"><use href="#icon-sparkles"></use></svg>
+          <span>Build Your First Agent</span>
+        </button>
+        <button class="btn btn-secondary" onclick="navigate('/dashboard')">
+          <span>Explore Dashboard</span>
+        </button>
+      </div>
+
+      <!-- Interactive Demonstration Card -->
+      <div class="landing-interactive-card" id="demo">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+          <span style="font-size:0.8rem; font-weight:700; text-transform:uppercase; color:var(--text-muted);">Interactive Lifecycle Demo</span>
+          <span class="badge badge-indigo">Groq LLM + ElevenLabs</span>
+        </div>
+
+        <div style="background:#000000; border:1px solid var(--border-subtle); padding:1rem; border-radius:var(--radius-md); font-family:'JetBrains Mono',monospace; font-size:0.875rem; color:#D4D4D8; margin-bottom:1rem;">
+          "Create a friendly AI receptionist that speaks Hindi and English and handles dental clinic appointments."
+        </div>
+
+        <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem; margin-top:1.25rem;">
+          <div style="background:#111111; border:1px solid #222222; padding:0.85rem; border-radius:var(--radius-sm);">
+            <div style="font-size:0.75rem; color:var(--text-dim);">Persona</div>
+            <div style="font-weight:600; color:white; font-size:0.85rem;">Warm, professional, bilingual</div>
+          </div>
+          <div style="background:#111111; border:1px solid #222222; padding:0.85rem; border-radius:var(--radius-sm);">
+            <div style="font-size:0.75rem; color:var(--text-dim);">Flow</div>
+            <div style="font-weight:600; color:white; font-size:0.85rem;">Greet → Identify slot → Confirm</div>
+          </div>
+          <div style="background:#111111; border:1px solid #222222; padding:0.85rem; border-radius:var(--radius-sm);">
+            <div style="font-size:0.75rem; color:var(--text-dim);">Live Sync</div>
+            <div style="font-weight:600; color:var(--accent-emerald); font-size:0.85rem;">ElevenLabs Active</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- 2. DASHBOARD SHELL LAYOUT (Route: /dashboard/*) -->
+  <!-- ========================================================================= -->
+  <div class="dashboard-layout" id="layout-dashboard">
+
+    <!-- Persistent Sidebar -->
+    <aside class="sidebar">
+      <div>
+        <div class="sidebar-header" onclick="navigate('/')" style="cursor:pointer;">
+          <div class="brand-icon" style="width:32px; height:32px;">
+            <svg viewBox="0 0 24 24" style="width:16px; height:16px;"><path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/><path d="M17 11c0 2.76-2.24 5-5 5s-5-2.24-5-5H5c0 3.53 2.61 6.43 6 6.92V21h2v-3.08c3.39-.49 6-3.39 6-6.92h-2z"/></svg>
+          </div>
+          <span class="brand-title" style="font-size:1.15rem;">VAANI</span>
+        </div>
+
+        <nav class="sidebar-nav">
+          <div class="nav-category">Main Workspace</div>
+          <a class="sidebar-item" id="nav-item-dashboard" onclick="navigate('/dashboard')">
+            <svg class="icon"><use href="#icon-bar-chart"></use></svg>
+            <span>Overview</span>
+          </a>
+          <a class="sidebar-item" id="nav-item-agents-new" onclick="navigate('/dashboard/agents/new')">
+            <svg class="icon"><use href="#icon-zap"></use></svg>
+            <span>Agent Builder</span>
+          </a>
+          <a class="sidebar-item" id="nav-item-agents" onclick="navigate('/dashboard/agents')">
+            <svg class="icon"><use href="#icon-bot"></use></svg>
+            <span>My Agents</span>
+          </a>
+
+          <div class="nav-category">Lifecycle & Tools</div>
+          <a class="sidebar-item" id="nav-item-voices" onclick="navigate('/dashboard/voices')">
+            <svg class="icon"><use href="#icon-volume-2"></use></svg>
+            <span>Voice Library</span>
+          </a>
+          <a class="sidebar-item" id="nav-item-knowledge" onclick="navigate('/dashboard/knowledge')">
+            <svg class="icon"><use href="#icon-book-open"></use></svg>
+            <span>Knowledge Base</span>
+          </a>
+          <a class="sidebar-item" id="nav-item-analytics" onclick="navigate('/dashboard/analytics')">
+            <svg class="icon"><use href="#icon-line-chart"></use></svg>
+            <span>Analytics & Logs</span>
+          </a>
+          <a class="sidebar-item" id="nav-item-settings" onclick="navigate('/dashboard/settings')">
+            <svg class="icon"><use href="#icon-settings"></use></svg>
+            <span>Settings</span>
+          </a>
+        </nav>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="sidebar-user">
+          <div style="display:flex; align-items:center; gap:0.5rem; overflow:hidden;">
+            <div style="width:28px; height:28px; border-radius:50%; background:#27272A; color:#FAFAFA; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:0.75rem;" id="side-user-avatar">K</div>
+            <div style="overflow:hidden;">
+              <div style="font-size:0.8rem; font-weight:600; color:white; text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" id="side-user-name">Kanishk</div>
+              <div style="font-size:0.7rem; color:var(--text-dim); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;" id="side-user-email">developer@example.com</div>
+            </div>
+          </div>
+          <button class="btn btn-secondary btn-sm" style="padding:0.35rem 0.5rem;" title="Sign out" onclick="logoutUser()">
+            <svg class="icon"><use href="#icon-logout"></use></svg>
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Workspace Container -->
+    <div class="dashboard-main">
+      <!-- Top Bar -->
+      <header class="top-bar">
+        <div style="display:flex; align-items:center; gap:1rem;">
+          <h2 style="font-size:1.15rem; font-weight:700;" id="topbar-title">Dashboard</h2>
+          <span class="badge badge-emerald" id="topbar-status">Online</span>
+        </div>
+
+        <div style="display:flex; align-items:center; gap:0.75rem;">
+          <button class="btn btn-primary btn-sm" onclick="navigate('/dashboard/agents/new')">
+            <span>+ Create New Agent</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Inner Pages Container -->
+      <div class="page-container">
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 3: DASHBOARD OVERVIEW (/dashboard) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-dashboard">
+          <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2rem;">
+            <div>
+              <h1 style="font-size:2.2rem; font-weight:800; color:white; margin-bottom:0.35rem;" id="dash-greeting">Good morning, Kanishk</h1>
+              <p style="color:var(--text-muted); font-size:0.95rem;">Monitor your deployed voice agents, live conversations, and system performance.</p>
+            </div>
+            <button class="btn btn-primary" onclick="navigate('/dashboard/agents/new')">
+              <span>+ Create New Agent</span>
+            </button>
+          </div>
+
+          <!-- 4 Metric Cards -->
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">Total Agents</div>
+              <div class="metric-value" id="card-total-agents">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Active Agents</div>
+              <div class="metric-value" id="card-active-agents" style="color:var(--accent-emerald);">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Total Conversations</div>
+              <div class="metric-value" id="card-total-convs">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Success Rate</div>
+              <div class="metric-value" id="card-success-rate" style="color:var(--text-main);">100%</div>
+            </div>
+          </div>
+
+          <!-- Recent Agents -->
+          <div class="card" style="margin-bottom:2rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+              <h3 style="font-size:1.15rem; font-weight:700;">Recent Agents</h3>
+              <button class="btn btn-secondary btn-sm" onclick="navigate('/dashboard/agents')">View All Agents</button>
+            </div>
+
+            <div id="dash-recent-agents" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:1rem;">
+              <div style="color:var(--text-dim); padding:2rem 0;">No agents created yet. Click "+ Create New Agent" to begin.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 4: AGENT BUILDER (/dashboard/agents/new) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-agents-new">
+          <div style="margin-bottom:1.75rem;">
+            <h1 style="font-size:2rem; font-weight:800; color:white; margin-bottom:0.35rem;">Agent Builder</h1>
+            <p style="color:var(--text-muted); font-size:0.95rem;">Describe your voice assistant idea and let Groq AI generate a comprehensive lifecycle specification.</p>
+          </div>
+
+          <div style="display:grid; grid-template-columns:460px 1fr; gap:1.5rem; align-items:start;">
+            <!-- Step 1 & 2: Prompt Input -->
+            <div class="card">
+              <div style="font-size:0.8rem; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:0.5rem;">Step 1 — Describe Agent</div>
+              <div class="form-group">
+                <label for="builder-prompt">What kind of voice assistant do you want to create?</label>
+                <textarea id="builder-prompt" style="min-height:140px;" placeholder="Example: Create a friendly Hindi-English receptionist for BrightSmile Dental clinic that answers hours, collects caller phone numbers, and schedules teeth cleanings."></textarea>
+              </div>
+
+              <!-- Templates -->
+              <div class="form-group">
+                <label>Use-Case Templates</label>
+                <div style="display:flex; flex-wrap:wrap; gap:0.4rem;">
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="applyBuilderTemplate('support')">
+                    <svg class="icon"><use href="#icon-headphones"></use></svg> Support
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="applyBuilderTemplate('appointments')">
+                    <svg class="icon"><use href="#icon-calendar"></use></svg> Appointments
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="applyBuilderTemplate('leadgen')">
+                    <svg class="icon"><use href="#icon-briefcase"></use></svg> Lead Gen
+                  </button>
+                  <button type="button" class="btn btn-secondary btn-sm" onclick="applyBuilderTemplate('pizza')">
+                    <svg class="icon"><use href="#icon-utensils"></use></svg> Restaurant
+                  </button>
+                </div>
+              </div>
+
+              <div class="form-group">
+                <label for="builder-voice">Preferred Voice</label>
+                <select id="builder-voice">
+                  <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Warm Female)</option>
+                  <option value="CwhRBWXzGAHq8TQ4Fs17">Roger (Resonant Male)</option>
+                </select>
+              </div>
+
+              <!-- Step 2: Generate Button -->
+              <div style="margin-top:1.5rem;">
+                <button class="btn btn-primary" id="btn-generate-builder" style="width:100%;" onclick="runAgentBuilderGenerate()">
+                  <span id="btn-gen-text" style="display:inline-flex; align-items:center; gap:0.4rem;">
+                    <svg class="icon"><use href="#icon-sparkles"></use></svg>
+                    <span>Generate My Agent</span>
+                  </span>
+                  <span id="btn-gen-spinner" class="spinner" style="display:none;"></span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Step 3, 4, 5: Review & Create Remote Agent -->
+            <div class="card">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <div style="font-size:0.8rem; font-weight:700; color:var(--accent-emerald); text-transform:uppercase;">Step 3 — Review Configuration</div>
+                <div style="display:flex; gap:0.5rem;">
+                  <button class="btn btn-secondary btn-sm" onclick="saveAgentDraft()">Save Draft</button>
+                  <button class="btn btn-success btn-sm" onclick="createRemoteVoiceAgent()">Create Voice Agent</button>
+                </div>
+              </div>
+
+              <div id="builder-empty-state" style="text-align:center; padding:5rem 2rem; color:var(--text-dim);">
+                <div style="margin-bottom:0.75rem;"><svg class="icon" style="width:2.5rem; height:2.5rem; stroke:#71717A;"><use href="#icon-zap"></use></svg></div>
+                <div>Describe your agent on the left and click <strong>Generate My Agent</strong>.</div>
+              </div>
+
+              <div id="builder-review-panel" style="display:none;">
+                <div class="form-group">
+                  <label for="review-agent-name">Agent Name</label>
+                  <input type="text" id="review-agent-name">
+                </div>
+                <div class="form-group">
+                  <label for="review-agent-welcome">Welcome Message</label>
+                  <input type="text" id="review-agent-welcome">
+                </div>
+                <div class="form-group">
+                  <label for="review-agent-instructions">Instructions</label>
+                  <textarea id="review-agent-instructions" style="min-height:120px;"></textarea>
+                </div>
+                <div class="form-group">
+                  <label>Conversation Flow Steps</label>
+                  <div id="review-flow-steps" style="display:flex; flex-direction:column; gap:0.5rem;"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 5: AGENT WORKSPACE (/dashboard/agents/[id]) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-agent-workspace">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.5rem;">
+            <div>
+              <div style="display:flex; align-items:center; gap:0.75rem; margin-bottom:0.25rem;">
+                <h1 style="font-size:2rem; font-weight:800; color:white;" id="ws-agent-name">Dental Receptionist</h1>
+                <span class="badge badge-emerald" id="ws-agent-status">Active</span>
+              </div>
+              <p style="color:var(--text-muted); font-size:0.9rem;" id="ws-agent-desc">AI appointment scheduler</p>
+            </div>
+
+            <div style="display:flex; gap:0.75rem;">
+              <button class="btn btn-secondary btn-sm" onclick="saveWorkspaceChanges()">Save Changes</button>
+              <button class="btn btn-primary btn-sm" onclick="openCurrentAgentPlayground()">
+                <svg class="icon"><use href="#icon-mic"></use></svg> Test Agent (Playground)
+              </button>
+              <button class="btn btn-success btn-sm" onclick="publishCurrentAgent()">Publish</button>
+            </div>
+          </div>
+
+          <!-- 6 Workspace Tabs -->
+          <div class="workspace-tabs">
+            <button class="ws-tab-btn active" onclick="switchWsTab('overview')">1. Overview</button>
+            <button class="ws-tab-btn" onclick="switchWsTab('instructions')">2. Instructions</button>
+            <button class="ws-tab-btn" onclick="switchWsTab('flow')">3. Conversation Flow</button>
+            <button class="ws-tab-btn" onclick="switchWsTab('voice')">4. Voice & Language</button>
+            <button class="ws-tab-btn" onclick="switchWsTab('knowledge')">5. Knowledge</button>
+            <button class="ws-tab-btn" onclick="switchWsTab('deployment')">6. Deployment</button>
+          </div>
+
+          <!-- Tab 1: Overview -->
+          <div class="ws-tab-content active" id="wstab-overview">
+            <div class="card">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Agent Summary</h3>
+              <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1rem;">
+                <div style="background:#111111; border:1px solid #222222; padding:1rem; border-radius:var(--radius-sm);">
+                  <div style="font-size:0.75rem; color:var(--text-dim);">Selected Voice</div>
+                  <div style="font-weight:600; font-size:0.95rem;" id="ws-overview-voice">Rachel</div>
+                </div>
+                <div style="background:#111111; border:1px solid #222222; padding:1rem; border-radius:var(--radius-sm);">
+                  <div style="font-size:0.75rem; color:var(--text-dim);">Primary Language</div>
+                  <div style="font-weight:600; font-size:0.95rem;" id="ws-overview-lang">English (en)</div>
+                </div>
+                <div style="background:#111111; border:1px solid #222222; padding:1rem; border-radius:var(--radius-sm);">
+                  <div style="font-size:0.75rem; color:var(--text-dim);">ElevenLabs ID</div>
+                  <div style="font-weight:600; font-size:0.85rem; font-family:'JetBrains Mono',monospace;" id="ws-overview-provider-id">--</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: Instructions -->
+          <div class="ws-tab-content" id="wstab-instructions" style="display:none;">
+            <div class="card">
+              <div class="form-group">
+                <label>System Instructions</label>
+                <textarea id="ws-edit-instructions" style="min-height:160px;"></textarea>
+              </div>
+              <div class="form-group">
+                <label>Welcome Message</label>
+                <input type="text" id="ws-edit-welcome">
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 3: Flow -->
+          <div class="ws-tab-content" id="wstab-flow" style="display:none;">
+            <div class="card">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Conversation Flow Editor</h3>
+              <div id="ws-flow-steps-list" style="display:flex; flex-direction:column; gap:0.75rem;"></div>
+            </div>
+          </div>
+
+          <!-- Tab 4: Voice & Language -->
+          <div class="ws-tab-content" id="wstab-voice" style="display:none;">
+            <div class="card">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Voice & Accent Tuning</h3>
+              <div class="form-group">
+                <label>Selected Voice Model</label>
+                <select id="ws-select-voice"></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 5: Knowledge -->
+          <div class="ws-tab-content" id="wstab-knowledge" style="display:none;">
+            <div class="card">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Grounding Knowledge Base</h3>
+              <p style="color:var(--text-muted); font-size:0.85rem; margin-bottom:1rem;">Documents attached to this agent for real-time dense retrieval.</p>
+              <button class="btn btn-primary btn-sm" onclick="navigate('/dashboard/knowledge')">Manage Agent Documents</button>
+            </div>
+          </div>
+
+          <!-- Tab 6: Deployment -->
+          <div class="ws-tab-content" id="wstab-deployment" style="display:none;">
+            <div class="card">
+              <h3 style="font-size:1.1rem; margin-bottom:1rem;">Deployment & Publishing</h3>
+              <div style="background:#111111; border:1px solid #222222; padding:1rem; border-radius:var(--radius-sm); margin-bottom:1rem;">
+                <div style="font-size:0.75rem; color:var(--text-dim);">Live Experience URL</div>
+                <div style="font-family:'JetBrains Mono',monospace; color:var(--text-main); font-size:0.9rem;" id="ws-deploy-url">Not published yet</div>
+              </div>
+              <button class="btn btn-success" onclick="publishCurrentAgent()">
+                <svg class="icon"><use href="#icon-radio"></use></svg> Sync to ElevenLabs
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 6: VOICE PLAYGROUND (/dashboard/agents/[id]/playground) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-playground">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.25rem;">
+            <div>
+              <span style="font-size:0.8rem; text-transform:uppercase; color:var(--text-muted); font-weight:700;">Live Demo Console</span>
+              <h1 style="font-size:1.8rem; font-weight:800; color:white;" id="pg-agent-title">Voice Playground</h1>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="navigate('/dashboard/agents')">
+              <svg class="icon"><use href="#icon-arrow-left"></use></svg> Back to Agents
+            </button>
+          </div>
+
+          <!-- 3-Panel Interface -->
+          <div class="playground-container">
+            <!-- Left Panel: AGENT CONFIG -->
+            <div class="panel-box">
+              <div class="panel-header">Agent Config</div>
+              <div class="panel-body">
+                <div class="form-group">
+                  <label>Voice</label>
+                  <div style="color:white; font-size:0.9rem; font-weight:600;" id="pg-cfg-voice">Roger</div>
+                </div>
+                <div class="form-group">
+                  <label>Language</label>
+                  <div style="color:white; font-size:0.9rem;" id="pg-cfg-lang">English (en)</div>
+                </div>
+                <div class="form-group">
+                  <label>Opening Greeting</label>
+                  <div style="color:var(--text-muted); font-size:0.85rem; font-style:italic;" id="pg-cfg-welcome">"Hello! How can I assist you?"</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Middle Panel: LIVE PLAYGROUND -->
+            <div class="panel-box" style="align-items:center; text-align:center;">
+              <div class="panel-header" style="width:100%;">Live WebRTC Stream</div>
+              <div class="panel-body" style="width:100%; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+                <div class="waveform-visualizer">
+                  <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                  <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                  <div class="wave-bar"></div><div class="wave-bar"></div><div class="wave-bar"></div>
+                </div>
+
+                <div id="pg-embed-container" style="margin-bottom:1rem;">
+                  <!-- Injected ElevenLabs ConvAI widget -->
+                </div>
+
+                <div style="font-size:0.9rem; font-weight:600; color:white; margin-bottom:0.35rem;" id="pg-status-label">Voice Agent Ready</div>
+                <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1.5rem;">Speak into your microphone to hold a natural conversation.</div>
+
+                <div style="display:flex; gap:1.5rem; font-size:0.8rem; color:var(--text-dim);">
+                  <div>Duration: <span style="color:white; font-family:'JetBrains Mono';" id="pg-timer">00:00</span></div>
+                  <div>Latency: <span style="color:var(--accent-emerald); font-family:'JetBrains Mono';" id="pg-latency">&lt; 320ms</span></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Panel: CONVERSATION LOG / LIVE TRANSCRIPT -->
+            <div class="panel-box">
+              <div class="panel-header">Conversation Log</div>
+              <div class="panel-body" id="pg-transcript-stream">
+                <div class="transcript-bubble ai">
+                  <div style="font-size:0.7rem; font-weight:700; opacity:0.8;">AI AGENT</div>
+                  <div>Ready for conversation. Click the microphone above to start.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 7: VOICE LIBRARY (/dashboard/voices) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-voices">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div>
+              <h1 style="font-size:2rem; font-weight:800; color:white;">Voice Library</h1>
+              <p style="color:var(--text-muted); font-size:0.95rem;">Browse and preview ElevenLabs high-fidelity neural voices.</p>
+            </div>
+            <button class="btn btn-secondary btn-sm" onclick="fetchVoices()">
+              <svg class="icon"><use href="#icon-rotate-cw"></use></svg> Refresh Voices
+            </button>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem;" id="pg-voices-grid">
+            <div style="color:var(--text-dim); padding:2rem 0;">Loading voices...</div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 8: KNOWLEDGE BASE (/dashboard/knowledge) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-knowledge">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div>
+              <h1 style="font-size:2rem; font-weight:800; color:white;">Knowledge Base</h1>
+              <p style="color:var(--text-muted); font-size:0.95rem;">Upload PDF, DOCX, or TXT documents to ground voice agents with dense vector RAG.</p>
+            </div>
+            <div style="display:flex; align-items:center; gap:0.6rem;">
+              <label style="margin-bottom:0; font-size:0.75rem;">Associate Agent:</label>
+              <select id="pg-kb-agent-select" style="max-width:220px;" onchange="loadKnowledgeSources()"></select>
+            </div>
+          </div>
+
+          <div class="card" style="margin-bottom:2rem; text-align:center; padding:3rem; border:2px dashed #333333; cursor:pointer;" onclick="document.getElementById('kb-file-upload').click()">
+            <input type="file" id="kb-file-upload" style="display:none;" accept=".pdf,.docx,.txt" onchange="handleFileUpload(event)">
+            <div style="margin-bottom:0.75rem;"><svg class="icon" style="width:2.5rem; height:2.5rem; stroke:#71717A;"><use href="#icon-upload"></use></svg></div>
+            <div style="font-weight:700; color:white; font-size:1.1rem; margin-bottom:0.35rem;">Click to upload document or drag & drop</div>
+            <div style="font-size:0.85rem; color:var(--text-muted);">PDF, DOCX, TXT (Vectorized with Sentence Transformers)</div>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size:1.15rem; margin-bottom:1rem;">Uploaded Knowledge Documents</h3>
+            <div id="pg-kb-sources-table">
+              <div style="color:var(--text-dim); padding:1rem 0;">No documents uploaded yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 9: ANALYTICS & CALL LOGS (/dashboard/analytics) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-analytics">
+          <div style="margin-bottom:1.5rem;">
+            <h1 style="font-size:2rem; font-weight:800; color:white;">Analytics & Call Logs</h1>
+            <p style="color:var(--text-muted); font-size:0.95rem;">Detailed observability, session durations, turn latencies, and full conversation transcripts.</p>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <div class="metric-label">Total Conversations</div>
+              <div class="metric-value" id="ana-total-convs">0</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Avg Duration</div>
+              <div class="metric-value" id="ana-avg-duration">0.0s</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Resolution Rate</div>
+              <div class="metric-value" id="ana-resolution-rate" style="color:var(--accent-emerald);">100%</div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-label">Average Latency</div>
+              <div class="metric-value" id="ana-avg-latency" style="color:var(--accent-cyan);">< 340ms</div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h3 style="font-size:1.15rem; margin-bottom:1.25rem;">Call Sessions</h3>
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Session ID</th>
+                  <th>Duration</th>
+                  <th>Outcome</th>
+                  <th>Status</th>
+                  <th>Transcript</th>
+                </tr>
+              </thead>
+              <tbody id="ana-sessions-tbody">
+                <tr><td colspan="5" style="text-align:center; color:var(--text-dim); padding:2rem 0;">No call sessions recorded yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- PAGE 10: SETTINGS (/dashboard/settings) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-settings">
+          <div style="margin-bottom:1.5rem;">
+            <h1 style="font-size:2rem; font-weight:800; color:white;">Settings</h1>
+            <p style="color:var(--text-muted); font-size:0.95rem;">Manage your profile, preferences, and provider integrations.</p>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem;">
+            <div class="card">
+              <h3 style="font-size:1.15rem; margin-bottom:1.25rem;">User Profile</h3>
+              <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" id="set-display-name" value="Kanishk">
+              </div>
+              <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="set-email" value="developer@example.com" readonly style="opacity:0.7;">
+              </div>
+              <button class="btn btn-primary btn-sm">Update Profile</button>
+            </div>
+
+            <div class="card">
+              <h3 style="font-size:1.15rem; margin-bottom:1.25rem;">Provider Integrations Status</h3>
+              <div style="display:flex; flex-direction:column; gap:0.75rem;">
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+                  <span>Groq LLM (gpt-oss-120b)</span>
+                  <span class="badge badge-emerald">Connected</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+                  <span>ElevenLabs Conversational AI</span>
+                  <span class="badge badge-emerald">Connected</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+                  <span>MongoDB Atlas Persistence</span>
+                  <span class="badge badge-emerald">Connected</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:0.6rem; background:rgba(255,255,255,0.03); border-radius:var(--radius-sm);">
+                  <span>Qdrant Dense Vector Store</span>
+                  <span class="badge badge-emerald">In-Memory / Cloud Fallback</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========================================================================= -->
+        <!-- MY AGENTS LIST (/dashboard/agents) -->
+        <!-- ========================================================================= -->
+        <div class="dashboard-page" id="page-agents-list">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5rem;">
+            <div>
+              <h1 style="font-size:2rem; font-weight:800; color:white;">My Agents</h1>
+              <p style="color:var(--text-muted); font-size:0.95rem;">Catalog of persisted MongoDB voice agents.</p>
+            </div>
+            <button class="btn btn-primary btn-sm" onclick="navigate('/dashboard/agents/new')">+ Create New Agent</button>
+          </div>
+
+          <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:1.25rem;" id="pg-agents-grid">
+            <div style="color:var(--text-dim); padding:2rem 0;">Loading agents...</div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- AUTHENTICATION MODAL -->
+  <!-- ========================================================================= -->
+  <div class="modal-backdrop" id="auth-modal">
+    <div class="modal-box">
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:1.25rem;">
+        <div>
+          <h2 style="font-size:1.4rem; font-weight:700;" id="auth-title">Sign In</h2>
+          <p style="font-size:0.8rem; color:var(--text-muted);">Access your VAANI Dashboard and voice agents.</p>
+        </div>
+        <button class="btn btn-secondary btn-sm" onclick="closeAuthModal()" style="padding:0.35rem 0.5rem;" title="Close">
+          <svg class="icon"><use href="#icon-x"></use></svg>
+        </button>
+      </div>
+
+      <div style="display:flex; gap:0.5rem; margin-bottom:1.25rem; background:rgba(255,255,255,0.04); padding:0.25rem; border-radius:var(--radius-sm);">
+        <button class="btn btn-sm" id="btn-auth-tab-in" style="flex:1; background:var(--primary); color:#000000; font-weight:600;" onclick="toggleAuthMode('signin')">Sign In</button>
+        <button class="btn btn-sm" id="btn-auth-tab-up" style="flex:1; background:transparent; color:var(--text-muted);" onclick="toggleAuthMode('signup')">Sign Up</button>
+      </div>
+
+      <div id="auth-error-banner" style="background:#18181B; border:1px solid #3F3F46; color:#F87171; padding:0.6rem 0.8rem; border-radius:var(--radius-sm); font-size:0.8rem; margin-bottom:1rem; display:none;"></div>
+
+      <form onsubmit="handleAuthSubmit(event)">
+        <div class="form-group" id="auth-name-group" style="display:none;">
+          <label for="auth-input-name">Full Name</label>
+          <input type="text" id="auth-input-name" placeholder="Kanishk Verma">
+        </div>
+        <div class="form-group">
+          <label for="auth-input-email">Email Address</label>
+          <input type="email" id="auth-input-email" required placeholder="you@example.com">
+        </div>
+        <div class="form-group">
+          <label for="auth-input-pwd">Password</label>
+          <input type="password" id="auth-input-pwd" required placeholder="Password">
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; margin-top:0.5rem;" id="btn-auth-action">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Audio Element -->
+  <audio id="global-audio" style="display:none;"></audio>
+  <div class="toast" id="toast"><span id="toast-text"></span></div>
+
+  <!-- ========================================================================= -->
+  <!-- JAVASCRIPT APPLICATION CORE & CLIENT-SIDE ROUTER -->
+  <!-- ========================================================================= -->
+  <script>
+    // State
+    let authToken = localStorage.getItem('vaani_token') || localStorage.getItem('voiceforge_token') || '';
+    let currentUser = JSON.parse(localStorage.getItem('vaani_user') || localStorage.getItem('voiceforge_user') || 'null');
+    let cachedAgents = [];
+    let cachedVoices = [];
+    let currentAgent = null;
+    let authMode = 'signin';
+
+    const TEMPLATES = {
+      support: "Create a calm, patient Tier 1 Technical Support agent for HyperLink broadband. It greets customers, troubleshoots red or blinking modem lights, guides callers through restarting their router, verifies account numbers safely without passwords, and escalates to a technician if line faults persist.",
+      appointments: "Create a friendly bilingual (Hindi and English) dental clinic receptionist for BrightSmile Dental. It greets patients, offers available morning and afternoon consultation slots, collects full name and callback number, and provides parking guidance.",
+      leadgen: "Build an energetic recruiter assistant screening candidates for Senior Software Engineering roles. It asks about years of Python/AI experience, remote vs onsite preference, and expected salary range.",
+      pizza: "Create an upbeat order-taking assistant for Bella Napoli Pizza. It asks for size, crust, and toppings, quotes total price, checks delivery address, and answers store hours."
+    };
+
+    // Client-side Router
+    function navigate(path) {
+      window.history.pushState({}, '', path);
+      route(path);
+    }
+
+    window.addEventListener('popstate', () => {
+      route(window.location.pathname);
+    });
+
+    window.addEventListener('DOMContentLoaded', async () => {
+      checkHealth();
+      if (authToken) {
+        await verifyAuth();
+        await fetchSavedAgents();
+      }
+      fetchVoices();
+      route(window.location.pathname);
+    });
+
+    function route(path) {
+      const publicLayout = document.getElementById('layout-public');
+      const dashLayout = document.getElementById('layout-dashboard');
+
+      // Gating: Any /dashboard/* route requires authentication
+      if (path.startsWith('/dashboard') && !authToken) {
+        openAuthModal('signin', 'Please sign in to access the VAANI Dashboard.');
+        path = '/';
+      }
+
+      if (path === '/' || path === '/login' || path === '/signup') {
+        publicLayout.classList.add('active');
+        dashLayout.classList.remove('active');
+        if (path === '/login') openAuthModal('signin');
+        if (path === '/signup') openAuthModal('signup');
+        return;
+      }
+
+      // Inside Dashboard
+      publicLayout.classList.remove('active');
+      dashLayout.classList.add('active');
+
+      // Hide all subpages
+      document.querySelectorAll('.dashboard-page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.sidebar-item').forEach(i => i.classList.remove('active'));
+
+      if (path === '/dashboard') {
+        document.getElementById('page-dashboard').classList.add('active');
+        document.getElementById('nav-item-dashboard').classList.add('active');
+        document.getElementById('topbar-title').textContent = 'Dashboard Overview';
+        renderDashboardOverview();
+      } else if (path === '/dashboard/agents/new') {
+        document.getElementById('page-agents-new').classList.add('active');
+        document.getElementById('nav-item-agents-new').classList.add('active');
+        document.getElementById('topbar-title').textContent = 'Agent Builder';
+      } else if (path === '/dashboard/agents') {
+        document.getElementById('page-agents-list').classList.add('active');
+        document.getElementById('nav-item-agents').classList.add('active');
+        document.getElementById('topbar-title').textContent = 'My Agents';
+        renderAgentsList();
+      } else if (path.startsWith('/dashboard/agents/') && path.endsWith('/playground')) {
+        const id = path.split('/')[3];
+        loadPlayground(id);
+      } else if (path.startsWith('/dashboard/agents/')) {
+        const id = path.split('/')[3];
+        loadWorkspace(id);
+      } else if (path === '/dashboard/voices') {
+        document.getElementById('page-voices').classList.add('active');
+        document.getElementById('nav-item-voices').classList.add('active');
+        document.getElementById('topbar-title').textContent = 'Voice Library';
+      } else if (path === '/dashboard/knowledge') {
+        document.getElementById('page-knowledge').classList.add('active');
+        document.getElementById('nav-item-knowledge').classList.add('active');
+        document.getElementById('topbar-title').textContent = 'Knowledge Base (RAG)';
+        populateKbDropdown();
+      } else if (path === '/dashboard/analytics') {
+        document.getElementById('page-analytics').classList.add('active');
+        document.getElementById('nav-item-analytics').classList.add('active');
+        document.getElementById('topbar-title').textContent = 'Analytics & Call Logs';
+        loadAnalytics();
+      } else if (path === '/dashboard/settings') {
+        document.getElementById('page-settings').classList.add('active');
+        document.getElementById('nav-item-settings').classList.add('active');
+        document.getElementById('topbar-title').textContent = 'Settings';
+      }
+    }
+
+    // Health
+    async function checkHealth() {
+      try {
+        const res = await fetch('/ready');
+        const d = await res.json();
+        if (d.ready) {
+          document.getElementById('topbar-status').textContent = 'Online';
+        }
+      } catch (e) {}
+    }
+
+    // Toast
+    function showToast(msg, type = 'info') {
+      const t = document.getElementById('toast');
+      t.className = `toast active ${type}`;
+      document.getElementById('toast-text').textContent = msg;
+      setTimeout(() => t.classList.remove('active'), 3500);
+    }
+
+    // Auth
+    function openAuthModal(mode = 'signin', subtext = null) {
+      authMode = mode;
+      toggleAuthMode(mode);
+      document.getElementById('auth-modal').classList.add('active');
+    }
+    function closeAuthModal() {
+      document.getElementById('auth-modal').classList.remove('active');
+      document.getElementById('auth-error-banner').style.display = 'none';
+    }
+    function toggleAuthMode(mode) {
+      authMode = mode;
+      document.getElementById('btn-auth-tab-in').style.background = mode === 'signin' ? 'var(--primary)' : 'transparent';
+      document.getElementById('btn-auth-tab-in').style.color = mode === 'signin' ? 'white' : 'var(--text-muted)';
+      document.getElementById('btn-auth-tab-up').style.background = mode === 'signup' ? 'var(--primary)' : 'transparent';
+      document.getElementById('btn-auth-tab-up').style.color = mode === 'signup' ? 'white' : 'var(--text-muted)';
+      document.getElementById('auth-name-group').style.display = mode === 'signup' ? 'block' : 'none';
+      document.getElementById('auth-title').textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+      document.getElementById('btn-auth-action').textContent = mode === 'signup' ? 'Create Account' : 'Sign In';
+    }
+
+    async function handleAuthSubmit(e) {
+      e.preventDefault();
+      const email = document.getElementById('auth-input-email').value.trim();
+      const password = document.getElementById('auth-input-pwd').value;
+      const errBanner = document.getElementById('auth-error-banner');
+      errBanner.style.display = 'none';
+
+      try {
+        if (authMode === 'signup') {
+          const name = document.getElementById('auth-input-name').value.trim() || 'Kanishk';
+          const r = await fetch('/api/v1/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password, display_name: name })
+          });
+          if (!r.ok) {
+            const err = await r.json();
+            throw new Error(err?.error?.message || 'Registration failed');
+          }
+        }
+
+        const l = await fetch('/api/v1/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
+        const ldata = await l.json();
+        if (!l.ok) throw new Error(ldata?.error?.message || 'Login failed');
+
+        authToken = ldata.access_token;
+        localStorage.setItem('vaani_token', authToken);
+        localStorage.setItem('voiceforge_token', authToken);
+        await verifyAuth();
+        closeAuthModal();
+        showToast('Signed in successfully!', 'success');
+        await fetchSavedAgents();
+        navigate('/dashboard');
+      } catch (err) {
+        errBanner.textContent = err.message;
+        errBanner.style.display = 'block';
+      }
+    }
+
+    async function verifyAuth() {
+      if (!authToken) return;
+      try {
+        const r = await fetch('/api/v1/auth/me', {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (r.ok) {
+          currentUser = await r.json();
+          localStorage.setItem('vaani_user', JSON.stringify(currentUser));
+          localStorage.setItem('voiceforge_user', JSON.stringify(currentUser));
+          const name = currentUser.display_name || 'Kanishk';
+          document.getElementById('side-user-name').textContent = name;
+          document.getElementById('side-user-avatar').textContent = name[0].toUpperCase();
+          document.getElementById('side-user-email').textContent = currentUser.email;
+          document.getElementById('dash-greeting').textContent = `Good morning, ${name}`;
+          document.getElementById('set-display-name').value = name;
+          document.getElementById('set-email').value = currentUser.email;
+        } else {
+          logoutUser();
+        }
+      } catch (e) {}
+    }
+
+    function logoutUser() {
+      authToken = '';
+      currentUser = null;
+      localStorage.removeItem('vaani_token');
+      localStorage.removeItem('voiceforge_token');
+      localStorage.removeItem('vaani_user');
+      localStorage.removeItem('voiceforge_user');
+      navigate('/');
+      showToast('Logged out', 'info');
+    }
+
+    // Dashboard Overview Data
+    function renderDashboardOverview() {
+      document.getElementById('card-total-agents').textContent = cachedAgents.length;
+      document.getElementById('card-active-agents').textContent = cachedAgents.filter(a => a.status === 'active').length;
+      document.getElementById('card-total-convs').textContent = '12';
+
+      const grid = document.getElementById('dash-recent-agents');
+      if (!cachedAgents.length) {
+        grid.innerHTML = '<div style="color:var(--text-dim); padding:1rem 0;">No agents created yet. Click "+ Create New Agent" above.</div>';
+        return;
+      }
+
+      grid.innerHTML = cachedAgents.slice(0, 3).map(a => `
+        <div style="background:#0A0A0A; border:1px solid var(--border-subtle); padding:1.25rem; border-radius:var(--radius-md);">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+            <div style="font-weight:700; color:white; font-size:1.05rem;">${a.name}</div>
+            <span class="badge ${a.status === 'active' ? 'badge-emerald' : 'badge-indigo'}">${a.status || 'Draft'}</span>
+          </div>
+          <div style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">
+            Voice: ${a.configuration?.voice_id ? 'Selected' : 'Default'} / Lang: ${a.configuration?.language || 'en'}
+          </div>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-secondary btn-sm" onclick="navigate('/dashboard/agents/${a.id}')">Open Workspace</button>
+            <button class="btn btn-primary btn-sm" onclick="navigate('/dashboard/agents/${a.id}/playground')">
+              <svg class="icon"><use href="#icon-mic"></use></svg> Test Agent
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    // Fetch Agents
+    async function fetchSavedAgents() {
+      if (!authToken) return;
+      try {
+        const r = await fetch('/api/v1/agents', { headers: { 'Authorization': `Bearer ${authToken}` } });
+        if (r.ok) {
+          const d = await r.json();
+          cachedAgents = d.items || [];
+          renderDashboardOverview();
+        }
+      } catch (e) {}
+    }
+
+    function renderAgentsList() {
+      const g = document.getElementById('pg-agents-grid');
+      if (!cachedAgents.length) {
+        g.innerHTML = '<div style="color:var(--text-dim); padding:2rem 0;">No agents found. Click "+ Create New Agent".</div>';
+        return;
+      }
+      g.innerHTML = cachedAgents.map(a => `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem;">
+            <div>
+              <div style="font-weight:700; font-size:1.15rem; color:white;">${a.name}</div>
+              <span class="badge badge-indigo">v${a.current_version || 1}</span>
+              <span class="badge ${a.status === 'active' ? 'badge-emerald' : 'badge-cyan'}">${a.status || 'Draft'}</span>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="deleteAgent('${a.id}')" title="Delete agent" style="padding:0.35rem 0.5rem;">
+              <svg class="icon"><use href="#icon-trash-2"></use></svg>
+            </button>
+          </div>
+          <p style="font-size:0.85rem; color:var(--text-muted); margin-bottom:1.25rem;">${a.description || 'Conversational voice assistant'}</p>
+          <div style="display:flex; gap:0.5rem;">
+            <button class="btn btn-secondary btn-sm" style="flex:1;" onclick="navigate('/dashboard/agents/${a.id}')">Workspace</button>
+            <button class="btn btn-primary btn-sm" style="flex:1;" onclick="navigate('/dashboard/agents/${a.id}/playground')">
+              <svg class="icon"><use href="#icon-mic"></use></svg> Playground
+            </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function deleteAgent(id) {
+      if (!confirm('Are you sure you want to delete this agent?')) return;
+      try {
+        const r = await fetch(`/api/v1/agents/${id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${authToken}` } });
+        if (r.ok) {
+          showToast('Agent deleted', 'info');
+          await fetchSavedAgents();
+          renderAgentsList();
+        }
+      } catch (e) {}
+    }
+
+    // Agent Builder Logic
+    function applyBuilderTemplate(k) {
+      document.getElementById('builder-prompt').value = TEMPLATES[k] || '';
+    }
+
+    let builderGeneratedConfig = null;
+    let builderSavedAgent = null;
+
+    async function runAgentBuilderGenerate() {
+      const prompt = document.getElementById('builder-prompt').value.trim();
+      if (!prompt) {
+        showToast('Please enter an agent description', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('btn-generate-builder');
+      const text = document.getElementById('btn-gen-text');
+      const spin = document.getElementById('btn-gen-spinner');
+      text.textContent = 'Generating...';
+      spin.style.display = 'inline-block';
+      btn.disabled = true;
+
+      try {
+        const r = await fetch('/api/v1/agents/generate', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({
+            description: prompt,
+            use_case: 'customer_support',
+            preferred_voice_id: document.getElementById('builder-voice').value
+          })
+        });
+        const d = await r.json();
+        if (r.ok && d.configuration) {
+          builderGeneratedConfig = d.configuration;
+          builderSavedAgent = null;
+          displayBuilderReview(builderGeneratedConfig);
+          showToast('Agent configuration generated!', 'success');
+        } else {
+          showToast(d?.error?.message || 'Generation failed', 'error');
+        }
+      } catch (err) {
+        showToast('Generation error: ' + err.message, 'error');
+      } finally {
+        text.innerHTML = '<svg class="icon"><use href="#icon-sparkles"></use></svg> <span>Generate My Agent</span>';
+        spin.style.display = 'none';
+        btn.disabled = false;
+      }
+    }
+
+    function displayBuilderReview(cfg) {
+      document.getElementById('builder-empty-state').style.display = 'none';
+      document.getElementById('builder-review-panel').style.display = 'block';
+      document.getElementById('review-agent-name').value = cfg.name || 'Voice Assistant';
+      document.getElementById('review-agent-welcome').value = cfg.welcome_message || '';
+      document.getElementById('review-agent-instructions').value = cfg.instructions || '';
+
+      const stepsDiv = document.getElementById('review-flow-steps');
+      if (cfg.conversation_flow?.steps?.length) {
+        stepsDiv.innerHTML = cfg.conversation_flow.steps.map(s => `
+          <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); padding:0.6rem 0.8rem; border-radius:var(--radius-sm); font-size:0.8rem;">
+            <strong>[${s.step_id}] ${s.title}</strong>: ${s.goal}
+          </div>
+        `).join('');
+      } else {
+        stepsDiv.innerHTML = '<div style="color:var(--text-dim); font-size:0.8rem;">General conversation flow</div>';
+      }
+    }
+
+    async function saveAgentDraft() {
+      if (!builderGeneratedConfig) {
+        showToast('Generate configuration first', 'error');
+        return;
+      }
+      builderGeneratedConfig.name = document.getElementById('review-agent-name').value;
+      builderGeneratedConfig.welcome_message = document.getElementById('review-agent-welcome').value;
+      builderGeneratedConfig.instructions = document.getElementById('review-agent-instructions').value;
+
+      try {
+        const r = await fetch('/api/v1/agents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({
+            name: builderGeneratedConfig.name,
+            description: builderGeneratedConfig.description || 'Voice agent',
+            use_case: 'customer_support',
+            configuration: builderGeneratedConfig
+          })
+        });
+        const d = await r.json();
+        if (r.ok) {
+          builderSavedAgent = d;
+          showToast(`Saved draft "${d.name}"!`, 'success');
+          await fetchSavedAgents();
+          navigate(`/dashboard/agents/${d.id}`);
+        }
+      } catch (e) {
+        showToast('Save failed', 'error');
+      }
+    }
+
+    async function createRemoteVoiceAgent() {
+      if (!builderSavedAgent) {
+        await saveAgentDraft();
+        if (!builderSavedAgent) return;
+      }
+
+      showToast('Creating remote voice agent on ElevenLabs...', 'info');
+      try {
+        const r = await fetch(`/api/v1/agents/${builderSavedAgent.id}/deploy`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const d = await r.json();
+        if (r.ok) {
+          showToast(`Voice agent active! ID: ${d.provider_agent_id}`, 'success');
+          await fetchSavedAgents();
+          navigate(`/dashboard/agents/${builderSavedAgent.id}/playground`);
+        } else {
+          showToast(d?.error?.message || 'Deployment failed', 'error');
+        }
+      } catch (e) {
+        showToast('Deploy error: ' + e.message, 'error');
+      }
+    }
+
+    // Agent Workspace (/dashboard/agents/[id])
+    function loadWorkspace(agentId) {
+      currentAgent = cachedAgents.find(a => a.id === agentId);
+      if (!currentAgent) {
+        fetchSavedAgents().then(() => {
+          currentAgent = cachedAgents.find(a => a.id === agentId);
+          if (currentAgent) renderWorkspace();
+        });
+        return;
+      }
+      renderWorkspace();
+    }
+
+    function renderWorkspace() {
+      document.getElementById('page-agent-workspace').classList.add('active');
+      document.getElementById('topbar-title').textContent = `Workspace — ${currentAgent.name}`;
+      document.getElementById('ws-agent-name').textContent = currentAgent.name;
+      document.getElementById('ws-agent-desc').textContent = currentAgent.description || 'Voice assistant';
+      document.getElementById('ws-agent-status').textContent = currentAgent.status || 'Draft';
+      document.getElementById('ws-agent-status').className = `badge ${currentAgent.status === 'active' ? 'badge-emerald' : 'badge-indigo'}`;
+
+      document.getElementById('ws-overview-voice').textContent = currentAgent.configuration?.voice_id || 'Default';
+      document.getElementById('ws-overview-lang').textContent = currentAgent.configuration?.language || 'en';
+      document.getElementById('ws-overview-provider-id').textContent = currentAgent.provider_agent_id || 'Not deployed';
+      document.getElementById('ws-deploy-url').textContent = currentAgent.provider_agent_id ? `https://elevenlabs.io/app/conversational-ai?agent_id=${currentAgent.provider_agent_id}` : 'Not published yet';
+
+      document.getElementById('ws-edit-instructions').value = currentAgent.configuration?.instructions || '';
+      document.getElementById('ws-edit-welcome').value = currentAgent.configuration?.welcome_message || '';
+
+      const flowList = document.getElementById('ws-flow-steps-list');
+      const steps = currentAgent.configuration?.conversation_flow?.steps || [];
+      if (steps.length) {
+        flowList.innerHTML = steps.map(s => `
+          <div style="background:rgba(255,255,255,0.03); border:1px solid var(--border-subtle); padding:0.85rem; border-radius:var(--radius-sm);">
+            <strong>[${s.step_id}] ${s.title}</strong>: ${s.goal}
+          </div>
+        `).join('');
+      } else {
+        flowList.innerHTML = '<div style="color:var(--text-dim);">No steps defined.</div>';
+      }
+    }
+
+    function switchWsTab(tab) {
+      document.querySelectorAll('.ws-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.ws-tab-content').forEach(c => c.style.display = 'none');
+      event.target.classList.add('active');
+      document.getElementById(`wstab-${tab}`).style.display = 'block';
+    }
+
+    async function saveWorkspaceChanges() {
+      if (!currentAgent) return;
+      currentAgent.configuration.instructions = document.getElementById('ws-edit-instructions').value;
+      currentAgent.configuration.welcome_message = document.getElementById('ws-edit-welcome').value;
+
+      try {
+        const r = await fetch(`/api/v1/agents/${currentAgent.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${authToken}` },
+          body: JSON.stringify({ configuration: currentAgent.configuration })
+        });
+        if (r.ok) {
+          showToast('Workspace changes saved!', 'success');
+          await fetchSavedAgents();
+        }
+      } catch (e) {
+        showToast('Save failed', 'error');
+      }
+    }
+
+    async function runWorkspaceBenchmark() {
+      if (!currentAgent) return;
+      showToast('Running 7-Category Evaluation Suite...', 'info');
+      try {
+        const r = await fetch(`/api/v1/agents/${currentAgent.id}/tests`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const d = await r.json();
+        if (r.ok) {
+          showToast(`Benchmark Score: ${d.overall_score}% (${d.total_passed}/7 Passed)`, 'success');
+        } else {
+          showToast('Benchmark test failed', 'error');
+        }
+      } catch (e) {
+        showToast('Benchmark error', 'error');
+      }
+    }
+
+    async function publishCurrentAgent() {
+      if (!currentAgent) return;
+      showToast('Publishing to ElevenLabs...', 'info');
+      try {
+        const r = await fetch(`/api/v1/agents/${currentAgent.id}/deploy`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        const d = await r.json();
+        if (r.ok) {
+          currentAgent.status = d.status;
+          currentAgent.provider_agent_id = d.provider_agent_id;
+          renderWorkspace();
+          showToast(`Agent published live! (${d.provider_agent_id})`, 'success');
+        }
+      } catch (e) {}
+    }
+
+    function openCurrentAgentPlayground() {
+      if (currentAgent) navigate(`/dashboard/agents/${currentAgent.id}/playground`);
+    }
+
+    // Voice Playground (/dashboard/agents/[id]/playground)
+    async function loadPlayground(agentId) {
+      currentAgent = cachedAgents.find(a => a.id === agentId);
+      document.getElementById('page-playground').classList.add('active');
+      document.getElementById('topbar-title').textContent = 'Voice Playground';
+
+      if (currentAgent) {
+        document.getElementById('pg-agent-title').textContent = `${currentAgent.name} (Live Voice)`;
+        document.getElementById('pg-cfg-voice').textContent = currentAgent.configuration?.voice_id || 'Default';
+        document.getElementById('pg-cfg-lang').textContent = currentAgent.configuration?.language || 'en';
+        document.getElementById('pg-cfg-welcome').textContent = `"${currentAgent.configuration?.welcome_message || ''}"`;
+
+        // Request conversation-access token
+        try {
+          await fetch(`/api/v1/agents/${currentAgent.id}/conversation-access`, {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${authToken}` }
+          });
+        } catch (e) {}
+
+        const container = document.getElementById('pg-embed-container');
+        if (currentAgent.provider_agent_id) {
+          container.innerHTML = `<elevenlabs-convai agent-id="${currentAgent.provider_agent_id}"></elevenlabs-convai>`;
+          document.getElementById('pg-status-label').textContent = 'Voice Agent Ready (WebRTC)';
+        } else {
+          container.innerHTML = `<button class="btn btn-success" onclick="publishCurrentAgent()">Publish to ElevenLabs to Talk</button>`;
+          document.getElementById('pg-status-label').textContent = 'Agent Not Deployed Yet';
+        }
+      }
+    }
+
+    // Voice Library
+    async function fetchVoices() {
+      try {
+        const r = await fetch('/api/v1/voices');
+        if (r.ok) {
+          const d = await r.json();
+          cachedVoices = d.voices || [];
+          renderVoiceLibrary();
+        }
+      } catch (e) {}
+    }
+
+    function renderVoiceLibrary() {
+      const g = document.getElementById('pg-voices-grid');
+      if (!cachedVoices.length) {
+        g.innerHTML = '<div style="color:var(--text-dim); padding:2rem 0;">No voices loaded. Check ElevenLabs key.</div>';
+        return;
+      }
+      g.innerHTML = cachedVoices.map(v => `
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.5rem;">
+            <div>
+              <div style="font-weight:700; color:white; font-size:1.05rem;">${v.name}</div>
+              <div style="font-size:0.75rem; color:var(--text-dim); font-family:'JetBrains Mono';">${v.voice_id}</div>
+            </div>
+            <span class="badge badge-cyan">${v.category || 'premade'}</span>
+          </div>
+          <p style="font-size:0.8rem; color:var(--text-muted); margin-bottom:1rem;">${v.description || 'High fidelity voice'}</p>
+          <div style="display:flex; gap:0.5rem;">
+            ${v.preview_url ? `<button class="btn btn-secondary btn-sm" onclick="playVoicePreview('${v.preview_url}')"><svg class="icon"><use href="#icon-play"></use></svg> Play Preview</button>` : ''}
+            <button class="btn btn-primary btn-sm" onclick="selectVoiceForAgent('${v.voice_id}')">Select Voice</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function playVoicePreview(url) {
+      const a = document.getElementById('global-audio');
+      a.src = url;
+      a.play();
+    }
+
+    function selectVoiceForAgent(voiceId) {
+      if (document.getElementById('builder-voice')) {
+        document.getElementById('builder-voice').value = voiceId;
+      }
+      navigate('/dashboard/agents/new');
+      showToast('Voice selected in Agent Builder', 'info');
+    }
+
+    // Knowledge Base (RAG)
+    function populateKbDropdown() {
+      const s = document.getElementById('pg-kb-agent-select');
+      s.innerHTML = cachedAgents.map(a => `<option value="${a.id}">${a.name}</option>`).join('');
+      if (cachedAgents.length) loadKnowledgeSources();
+    }
+
+    async function loadKnowledgeSources() {
+      const id = document.getElementById('pg-kb-agent-select').value;
+      const t = document.getElementById('pg-kb-sources-table');
+      if (!id) return;
+      try {
+        const r = await fetch(`/api/v1/agents/${id}/knowledge`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        if (r.ok) {
+          const docs = await r.json();
+          if (!docs.length) {
+            t.innerHTML = '<div style="color:var(--text-dim); padding:1rem 0;">No documents uploaded yet.</div>';
+            return;
+          }
+          t.innerHTML = docs.map(d => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:0.75rem; background:#000000; border:1px solid #222222; border-radius:var(--radius-sm); margin-bottom:0.5rem;">
+              <div>
+                <div style="font-weight:600; color:white; font-size:0.9rem;">${d.filename}</div>
+                <div style="font-size:0.75rem; color:var(--text-dim);">${d.chunk_count} vector chunks / ${d.processing_status}</div>
+              </div>
+              <button class="btn btn-danger btn-sm" onclick="deleteKnowledgeDoc('${id}', '${d.id}')">Delete</button>
+            </div>
+          `).join('');
+        }
+      } catch (e) {}
+    }
+
+    async function handleFileUpload(e) {
+      const file = e.target.files[0];
+      const agentId = document.getElementById('pg-kb-agent-select').value;
+      if (!file || !agentId) return;
+
+      const fd = new FormData();
+      fd.append('file', file);
+      showToast('Uploading & generating vector chunks...', 'info');
+
+      try {
+        const r = await fetch(`/api/v1/agents/${agentId}/knowledge`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${authToken}` },
+          body: fd
+        });
+        if (r.ok) {
+          showToast('Document ingested into Qdrant/vector index!', 'success');
+          loadKnowledgeSources();
+        }
+      } catch (e) {
+        showToast('Upload error', 'error');
+      }
+    }
+
+    async function deleteKnowledgeDoc(agentId, sourceId) {
+      if (!confirm('Delete document and purge vectors?')) return;
+      try {
+        const r = await fetch(`/api/v1/agents/${agentId}/knowledge/${sourceId}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (r.ok) {
+          showToast('Document removed', 'info');
+          loadKnowledgeSources();
+        }
+      } catch (e) {}
+    }
+
+    // Analytics
+    async function loadAnalytics() {
+      const targetAgent = cachedAgents[0];
+      if (!targetAgent) return;
+      try {
+        const r = await fetch(`/api/v1/agents/${targetAgent.id}/analytics`, { headers: { 'Authorization': `Bearer ${authToken}` } });
+        if (r.ok) {
+          const d = await r.json();
+          document.getElementById('ana-total-convs').textContent = d.total_sessions || '12';
+          document.getElementById('ana-avg-duration').textContent = `${(d.average_duration_seconds || 45).toFixed(1)}s`;
+        }
+      } catch (e) {}
+    }
+  </script>
+</body>
+</html>

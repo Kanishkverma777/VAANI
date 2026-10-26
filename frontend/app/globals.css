@@ -1,0 +1,94 @@
+@import "tailwindcss";
+@import "../index.css";
+
+:root {
+  --background: #000000;
+  --foreground: #FAFAFA;
+  --card: #0A0A0A;
+  --card-foreground: #FAFAFA;
+  --border: #222222;
+  --input: #1A1A1A;
+  --primary: #FFFFFF;
+  --primary-foreground: #000000;
+  --muted: #27272A;
+  --muted-foreground: #71717A;
+  --ring: #FFFFFF;
+
+  --color-background: #000000;
+  --color-foreground: #FAFAFA;
+  --color-card: #0A0A0A;
+  --color-card-foreground: #FAFAFA;
+  --color-border: #222222;
+  --color-input: #1A1A1A;
+  --color-primary: #FFFFFF;
+  --color-primary-foreground: #000000;
+  --color-muted: #27272A;
+  --color-muted-foreground: #71717A;
+  --color-ring: #FFFFFF;
+}
+
+body {
+  background-color: #000000;
+  color: #FAFAFA;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  overflow-x: hidden;
+}
+
+/* Custom scrollbars */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: #000000;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272A;
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3F3F46;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   ElevenLabs Conversational AI Widget — Inline Hero XL
+   Overrides the default :host { position: fixed; right: 32px; bottom: 32px; }
+   so the widget lives cleanly inside the container in Hero XL size.
+───────────────────────────────────────────────────────────── */
+
+.elevenlabs-inline-embed {
+  position: relative;
+  width: 100%;
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;
+  padding: 3rem 1rem;
+}
+
+.elevenlabs-inline-embed elevenlabs-convai {
+  position: relative !important;
+  inset: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  left: auto !important;
+  top: auto !important;
+  z-index: 10 !important;
+  pointer-events: auto !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  margin: 0 auto !important;
+  transform: scale(1.95) !important;
+  transform-origin: center center;
+  --el-bg-color: #111116 !important;
+  --el-text-color: #FAFAFA !important;
+  --el-border-color: #27272A !important;
+  --el-btn-color: #10B981 !important;
+  --el-btn-text-color: #09090B !important;
+  --el-border-radius: 28px !important;
+  --el-btn-radius: 999px !important;
+  --btn-max-width: 480px !important;
+}

@@ -1,0 +1,478 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+/* ───────────────────────── AI Thinking Orb Keyframes ───────────────────────── */
+
+@keyframes mo-spin {
+  to {
+    --angle: 360deg;
+  }
+}
+
+@keyframes mo-drift {
+  from {
+    transform: translateX(-14%);
+  }
+  to {
+    transform: translateX(14%);
+  }
+}
+
+@keyframes mo-shimmer {
+  from {
+    background-position: 150% 0;
+  }
+  to {
+    background-position: -100% 0;
+  }
+}
+
+@keyframes mo-dot {
+  0%, 80%, 100% {
+    opacity: .25;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+@keyframes mo-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes mo-out {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+
+@keyframes mo-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes mo-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes mo-shake {
+  0%, 100% {
+    transform: translate(-50%, -50%);
+  }
+  25% {
+    transform: translate(calc(-50% - 4px), -50%);
+  }
+  75% {
+    transform: translate(calc(-50% + 4px), -50%);
+  }
+}
+
+/* ───────────────────────── Morph Orb CSS Styles ───────────────────────── */
+
+.mo-root {
+  position: relative;
+  width: 100%;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  user-select: none;
+}
+
+.mo-bg {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.04) 0%, transparent 70%);
+}
+
+.mo-halo {
+  position: absolute;
+  top: 46%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  height: 380px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.15) 0%, transparent 65%);
+  opacity: var(--oCenter, 0);
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+
+.mo-mover {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  will-change: transform;
+}
+
+.mo-trail {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.4) 0%, transparent 70%);
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.mo-actor {
+  position: relative;
+  width: var(--w, 560px);
+  height: var(--h, 60px);
+  border-radius: var(--r, 999px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.mo-actor[data-shake] {
+  animation: mo-shake 0.25s ease-in-out;
+}
+
+.mo-underglow {
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: radial-gradient(ellipse at center, rgba(16, 185, 129, 0.2) 0%, transparent 80%);
+  opacity: var(--oGlow, 1);
+  pointer-events: none;
+}
+
+.mo-halo-green {
+  position: absolute;
+  inset: -12px;
+  border-radius: inherit;
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+  opacity: var(--oHalo, 0);
+  pointer-events: none;
+}
+
+.mo-surface {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  opacity: var(--oPill, 1);
+  overflow: hidden;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.6);
+}
+
+.mo-aurora {
+  position: absolute;
+  inset: 0;
+  opacity: var(--oAur, 1);
+  pointer-events: none;
+  display: flex;
+}
+
+.mo-aurora i {
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.03), transparent);
+  animation: mo-drift 6s ease-in-out infinite alternate;
+}
+
+.mo-ball {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle, #1a1a1a 0%, #0a0a0a 100%);
+  border: 1px solid #2e2e2e;
+  opacity: var(--oBall, 0);
+  pointer-events: none;
+}
+
+.mo-green {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(circle, #10b981 0%, #059669 100%);
+  opacity: var(--oGreen, 0);
+  transform: scale(var(--gs, 1));
+  pointer-events: none;
+}
+
+.mo-card {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  opacity: var(--oCard, 0);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.8);
+  pointer-events: none;
+}
+
+.mo-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: var(--oRing, 1);
+  pointer-events: none;
+}
+
+.mo-input {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  gap: 12px;
+  opacity: var(--oInput, 1);
+  transform: scale(var(--inScale, 1));
+  z-index: 2;
+}
+
+.mo-spark {
+  width: 20px;
+  height: 20px;
+  color: #10b981;
+  shrink: 0;
+}
+
+.mo-field {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #ffffff;
+  font-size: 14px;
+}
+
+.mo-field::placeholder {
+  color: #71717a;
+}
+
+.mo-send {
+  width: 36px;
+  height: 36px;
+  border-radius: 9999px;
+  background: #111111;
+  border: 1px solid #222222;
+  color: #71717a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mo-send[data-ready] {
+  background: #ffffff;
+  color: #000000;
+  border-color: #ffffff;
+}
+
+.mo-send svg {
+  width: 16px;
+  height: 16px;
+}
+
+.mo-orb {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 220px;
+  height: 220px;
+  pointer-events: none;
+  z-index: 3;
+}
+
+.mo-pulse {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 132px;
+  height: 132px;
+  border-radius: 9999px;
+  border: 2px solid #10b981;
+  opacity: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.mo-answer {
+  position: absolute;
+  inset: 0;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  opacity: var(--oCard, 0);
+  pointer-events: auto;
+  z-index: 4;
+}
+
+.mo-a-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: monospace;
+  text-transform: uppercase;
+  color: #10b981;
+  margin-bottom: 6px;
+  opacity: var(--hOp, 0);
+}
+
+.mo-a-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 9999px;
+  background: #10b981;
+  transform: scale(var(--dotS, 0));
+}
+
+.mo-a-body {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #e4e4e7;
+  margin: 0;
+}
+
+.mo-w {
+  display: inline-block;
+  opacity: 0;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.mo-status {
+  position: absolute;
+  top: calc(46% + 90px);
+  left: 50%;
+  transform: translate(-50%, var(--sTy, 0px));
+  opacity: var(--sOp, 0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  font-family: monospace;
+  font-size: 12px;
+  color: #a1a1aa;
+}
+
+.mo-lab {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mo-lab.mo-in {
+  animation: mo-in 0.3s ease forwards;
+}
+
+.mo-lab.mo-out {
+  animation: mo-out 0.3s ease forwards;
+}
+
+.mo-lab-done {
+  color: #10b981;
+  font-weight: 600;
+}
+
+.mo-dots i {
+  display: inline-block;
+  width: 3px;
+  height: 3px;
+  border-radius: 9999px;
+  background: #a1a1aa;
+  margin-left: 2px;
+  animation: mo-dot 1.2s infinite;
+}
+
+.mo-dots i:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.mo-dots i:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.mo-reset {
+  position: absolute;
+  top: calc(46% + 90px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111111;
+  border: 1px solid #1a1a1a;
+  color: #a1a1aa;
+  font-size: 11px;
+  font-family: monospace;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  cursor: pointer;
+  opacity: 0;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+.mo-root[data-phase="answered"] .mo-reset {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mo-reset:hover {
+  background: #1a1a1a;
+  color: #ffffff;
+}
+
+.mo-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  border: 0;
+}
+
+.mo-debug {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: #0a0a0a;
+  border: 1px solid #1a1a1a;
+  padding: 6px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  font-family: monospace;
+  color: #a1a1aa;
+}
