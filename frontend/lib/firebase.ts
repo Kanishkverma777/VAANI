@@ -69,14 +69,13 @@ export async function syncFirebaseWithBackend(firebaseUser: User): Promise<{ acc
     );
     return res;
   } catch (err) {
-    // Graceful fallback: set local storage with Firebase session so the user is never blocked
-    setStoredToken(idToken);
-    const fallbackUser = {
-      email: firebaseUser.email || '',
-      full_name: firebaseUser.displayName || firebaseUser.email?.split('@')[0] || 'User',
-    };
-    setStoredUser(fallbackUser);
-    return { access_token: idToken, user: fallbackUser };
+    console.error('Failed to synchronize Firebase session with backend:', err);
+    clearStoredToken();
+    throw new Error(
+      err instanceof Error
+        ? err.message
+        : 'Failed to synchronize authentication session with backend.'
+    );
   }
 }
 

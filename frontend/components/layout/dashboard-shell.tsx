@@ -7,13 +7,14 @@ import { getStoredToken } from '@/lib/api-client';
 
 export function DashboardShell({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [mounted, setMounted] = useState<boolean>(false);
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
-    setMounted(true);
     const token = getStoredToken();
     if (!token) {
       router.push('/login');
+    } else {
+      setIsAuthenticated(true);
     }
   }, [router]);
 
@@ -23,12 +24,13 @@ export function DashboardShell({ children }: { children: React.ReactNode }) {
         <Sidebar />
       </Suspense>
       <div className="flex-1 flex flex-col min-w-0 overflow-y-auto relative">
-        {!mounted && (
+        {!isAuthenticated ? (
           <div className="absolute inset-0 z-50 bg-[#000000] flex items-center justify-center text-zinc-500 text-xs">
             Loading VAANI...
           </div>
+        ) : (
+          children
         )}
-        {children}
       </div>
     </div>
   );

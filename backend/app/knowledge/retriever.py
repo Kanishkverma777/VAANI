@@ -151,11 +151,14 @@ class QdrantRetriever:
 
         try:
             client = self._get_client()
-            filter_condition = models.Filter(
-                must=[
-                    models.FieldCondition(key="agent_id", match=models.MatchValue(value=agent_id)),
-                ]
-            )
+            must_conditions = [
+                models.FieldCondition(key="agent_id", match=models.MatchValue(value=agent_id)),
+            ]
+            if owner_id:
+                must_conditions.append(
+                    models.FieldCondition(key="owner_id", match=models.MatchValue(value=owner_id))
+                )
+            filter_condition = models.Filter(must=must_conditions)
 
             # 1. Fetch dense candidates from Qdrant
             dense_scores: Dict[str, float] = {}

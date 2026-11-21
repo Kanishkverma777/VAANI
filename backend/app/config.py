@@ -1,6 +1,6 @@
 from typing import List, Optional
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -29,12 +29,13 @@ class Settings(BaseSettings):
         default="http://localhost:3000,http://127.0.0.1:3000",
         alias="ALLOWED_ORIGINS",
     )
+    firebase_project_id: str = Field(default="vaani-372c2", alias="FIREBASE_PROJECT_ID")
 
     # MongoDB
     mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")
     mongodb_database: str = Field(default="voiceforge", alias="MONGODB_DATABASE")
     mongodb_server_selection_timeout_ms: int = Field(
-        default=3000, alias="MONGODB_SERVER_SELECTION_TIMEOUT_MS"
+        default=10000, alias="MONGODB_SERVER_SELECTION_TIMEOUT_MS"
     )
 
     # Groq LLM
@@ -64,6 +65,15 @@ class Settings(BaseSettings):
     twilio_account_sid: Optional[str] = Field(default=None, alias="TWILIO_ACCOUNT_SID")
     twilio_auth_token: Optional[str] = Field(default=None, alias="TWILIO_AUTH_TOKEN")
     twilio_phone_number: Optional[str] = Field(default=None, alias="TWILIO_PHONE_NUMBER")
+
+    @model_validator(mode="after")
+    def validate_production_secrets(self) -> "Settings":
+        if self.app_env == "production":
+            if "development" in self.auth_secret_key.lower() or len(self.auth_secret_key) < 32:
+                raise ValueError(
+                    "AUTH_SECRET_KEY must be a secure, random string (at least 32 characters) in production."
+                )
+        return self
 
     @property
     def allowed_origins(self) -> List[str]:

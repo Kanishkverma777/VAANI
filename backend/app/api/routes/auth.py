@@ -6,7 +6,12 @@ from fastapi import APIRouter, Depends, status
 from app.api.dependencies import get_current_user
 from app.config import settings
 from app.core.exceptions import AuthenticationException, ConflictException
-from app.core.security import create_access_token, hash_password, verify_password
+from app.core.security import (
+    create_access_token,
+    hash_password,
+    verify_firebase_id_token,
+    verify_password,
+)
 from app.repositories.user_repository import UserRepository, default_user_repository
 from app.schemas.auth import FirebaseAuthRequest, TokenResponse, UserLogin, UserRegister, UserResponse
 
@@ -111,6 +116,24 @@ async def firebase_auth(
     user_repo: UserRepository = Depends(lambda: default_user_repository),
 ) -> TokenResponse:
     """Synchronize Firebase user with MongoDB and issue access token."""
+    # Cryptographically verify Google Firebase ID token
+    if data.id_token:
+        verified_payload = verify_firebase_id_token(data.id_token)
+        verified_email = verified_payload.get("email")
+        if verified_email and verified_email.lower() != data.email.lower():
+            raise AuthenticationException(
+                "Provided email does not match verified Firebase token email.",
+                code="EMAIL_TOKEN_MISMATCH",
+            )
+        firebase_uid = verified_payload.get("sub") or verified_payload.get("user_id") or data.uid
+    elif settings.debug or settings.app_env in ("development", "test"):
+        firebase_uid = data.uid
+    else:
+        raise AuthenticationException(
+            "Firebase id_token is required for authentication.",
+            code="FIREBASE_TOKEN_REQUIRED",
+        )
+
     user = await user_repo.get_by_email(data.email)
     if not user:
         # Create user record in MongoDB
@@ -122,7 +145,7 @@ async def firebase_auth(
 
     token = create_access_token(
         subject=user["id"],
-        claims={"email": user["email"], "name": user["display_name"], "firebase_uid": data.uid},
+        claims={"email": user["email"], "name": user["display_name"], "firebase_uid": firebase_uid},
         expires_delta=timedelta(minutes=settings.access_token_expire_minutes),
     )
     user_resp = UserResponse(
