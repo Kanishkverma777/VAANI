@@ -40,11 +40,19 @@ async def list_voices(
 )
 async def get_voice_preview(
     voice_id: str,
+    text: Optional[str] = Query(default=None, description="Custom text to speak with cloned voice"),
     service: VoiceService = Depends(get_voice_service),
 ):
     """Stream MP3 audio sample preview for any voice, including custom cloned voices."""
-    audio_bytes, media_type = await service.get_voice_preview_audio(voice_id)
-    return Response(content=audio_bytes, media_type=media_type)
+    audio_bytes, media_type = await service.get_voice_preview_audio(voice_id, custom_text=text)
+    return Response(
+        content=audio_bytes,
+        media_type=media_type,
+        headers={
+            "Cache-Control": "public, max-age=3600",
+            "Accept-Ranges": "bytes",
+        },
+    )
 
 
 @router.post(

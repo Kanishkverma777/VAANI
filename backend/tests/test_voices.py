@@ -187,3 +187,40 @@ async def test_clone_voice_missing_consent(async_client: AsyncClient):
     assert res.status_code == 422
     assert res.json()["error"]["code"] == "CONSENT_NOT_VERIFIED"
 
+
+@pytest.mark.asyncio
+async def test_voice_preview_default_synthesis(async_client: AsyncClient):
+    """Test streaming audio preview with default demonstration speech."""
+    with patch(
+        "app.integrations.elevenlabs_client.ElevenLabsClient.text_to_speech",
+        new_callable=AsyncMock,
+        return_value=b"SYNTHESIZED_DEMO_AUDIO_BYTES_TEST" * 50,
+    ):
+        res = await async_client.get("/api/v1/voices/test_voice_123/preview")
+        assert res.status_code == 200
+        assert res.headers["content-type"] == "audio/mpeg"
+        assert len(res.content) > 500
+
+
+@pytest.mark.asyncio
+async def test_voice_preview_custom_text_synthesis(async_client: AsyncClient):
+    """Test streaming audio preview with arbitrary custom text for cloned voice test."""
+    with patch(
+        "app.integrations.elevenlabs_client.ElevenLabsClient.text_to_speech",
+        new_callable=AsyncMock,
+        return_value=b"SYNTHESIZED_CUSTOM_SPEECH_AUDIO_BYTES" * 50,
+    ) as mock_tts:
+        custom_sentence = "Namaste! Main Tanu bol rahi hoon. Aapka booking confirm ho gaya hai."
+        res = await async_client.get(
+            f"/api/v1/voices/cloned_voice_999/preview?text={custom_sentence}"
+        )
+        assert res.status_code == 200
+        assert res.headers["content-type"] == "audio/mpeg"
+        assert len(res.content) > 500
+        # Verify text was passed into text-to-speech engine
+        mock_tts.assert_called_once()
+        _, kwargs = mock_tts.call_args
+        assert kwargs["text"] == custom_sentence
+        assert kwargs["voice_id"] == "cloned_voice_999"
+
+

@@ -433,7 +433,8 @@ class ElevenLabsClient:
         import os
         from dotenv import dotenv_values
         active_key = (
-            dotenv_values(".env").get("ELEVENLABS_API_KEY")
+            dotenv_values("backend/.env").get("ELEVENLABS_API_KEY")
+            or dotenv_values(".env").get("ELEVENLABS_API_KEY")
             or os.environ.get("ELEVENLABS_API_KEY")
             or self.api_key
             or settings.elevenlabs_api_key
@@ -513,16 +514,19 @@ class ElevenLabsClient:
 
                 result = []
                 for v in raw_voices:
+                    category = v.get("category")
+                    vid = v.get("voice_id", "")
                     preview_url = v.get("preview_url")
-                    if not preview_url:
-                        vid = v.get("voice_id", "")
+                    # For cloned voices, ElevenLabs preview_url merely replays the user's uploaded sample.
+                    # Route cloned voices to our synthesis endpoint so it speaks fresh AI-generated speech.
+                    if category == "cloned" or not preview_url:
                         if vid:
                             preview_url = f"/api/v1/voices/{vid}/preview"
                     result.append(
                         VoiceModel(
-                            voice_id=v.get("voice_id", ""),
+                            voice_id=vid,
                             name=v.get("name", "Unnamed Voice"),
-                            category=v.get("category"),
+                            category=category,
                             description=v.get("description"),
                             preview_url=preview_url,
                             labels=v.get("labels", {}) or {},
