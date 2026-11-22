@@ -1,0 +1,31 @@
+# Version control
+.git
+.gitignore
+
+# Environment & secrets (CRITICAL: Never bake secrets into container layers)
+.env
+.env.*
+*.env
+
+# Python artifacts
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+
+# Testing & quality caches
+.pytest_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+tests/
+
+# Local uploads and data
+uploads/
+data/
+qdrant_storage/

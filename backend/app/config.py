@@ -30,6 +30,9 @@ class Settings(BaseSettings):
         alias="ALLOWED_ORIGINS",
     )
     firebase_project_id: str = Field(default="vaani-372c2", alias="FIREBASE_PROJECT_ID")
+    webhook_secret: Optional[str] = Field(default=None, alias="WEBHOOK_SECRET")
+    session_retention_days: int = Field(default=90, alias="SESSION_RETENTION_DAYS")
+    enable_dpdp_consent_notice: bool = Field(default=True, alias="ENABLE_DPDP_CONSENT_NOTICE")
 
     # MongoDB
     mongodb_uri: str = Field(default="mongodb://localhost:27017", alias="MONGODB_URI")

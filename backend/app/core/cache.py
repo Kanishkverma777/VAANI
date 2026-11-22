@@ -57,6 +57,11 @@ class InMemoryCache:
                 del self._store[k]
             return len(keys_to_delete)
 
+    async def clear_pattern(self, pattern: str) -> int:
+        """Remove all keys matching pattern prefix (e.g. prefix:*)."""
+        prefix = pattern.split("*")[0]
+        return await self.clear_prefix(prefix)
+
     async def clear(self) -> None:
         """Purge all entries from the cache."""
         async with self._lock:

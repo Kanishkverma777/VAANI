@@ -3,7 +3,8 @@ import re
 import uuid
 import httpx
 from app.config import settings
-from app.core.exceptions import NotFoundException, ValidationException
+from app.core.cache import default_cache
+from app.core.exceptions import NotFoundException, RateLimitException, ValidationException
 from app.core.logging import logger
 from app.integrations.elevenlabs_client import ElevenLabsClient, default_elevenlabs_client
 from app.repositories.agent_repository import AgentRepository, default_agent_repository
@@ -26,6 +27,27 @@ class TelephonyService:
         from_number: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Place an outbound call to a real destination phone number."""
+        # 1. Normalize and validate destination phone number (E.164 format)
+        cleaned_to = re.sub(r"[\s\-\(\)]", "", to_number.strip())
+        if not cleaned_to.startswith("+"):
+            cleaned_to = "+" + cleaned_to
+
+        digits = re.sub(r"\D", "", cleaned_to)
+        if len(digits) < 8 or len(digits) > 15:
+            raise ValidationException(
+                f"Invalid phone number '{to_number}'. Please provide a valid phone number with country code (e.g. +91 98765 43210 or +1 555 234 8901).",
+                code="INVALID_PHONE_NUMBER",
+            )
+
+        # 2. Toll-Fraud Protection: Restrict destinations to verified regions (+91 India, +1 US/Canada)
+        ALLOWED_CALL_PREFIXES = ("+91", "+1")
+        if not any(cleaned_to.startswith(p) for p in ALLOWED_CALL_PREFIXES):
+            raise ValidationException(
+                f"Outbound destination '{cleaned_to}' is not permitted. Calls are strictly restricted to verified regions ({', '.join(ALLOWED_CALL_PREFIXES)}) to prevent carrier toll fraud.",
+                code="TELEPHONY_DESTINATION_RESTRICTED",
+            )
+
+        # 3. Verify Agent status and deployment
         agent = await self.agent_repo.get_agent_by_id(agent_id, owner_id=owner_id)
         if not agent:
             agent = await self.agent_repo.get_agent_by_id(agent_id, owner_id=None)
@@ -39,17 +61,16 @@ class TelephonyService:
                 code="AGENT_NOT_DEPLOYED",
             )
 
-        # Normalize and validate destination phone number (E.164 format)
-        cleaned_to = re.sub(r"[\s\-\(\)]", "", to_number.strip())
-        if not cleaned_to.startswith("+"):
-            cleaned_to = "+" + cleaned_to
-
-        digits = re.sub(r"\D", "", cleaned_to)
-        if len(digits) < 8 or len(digits) > 15:
-            raise ValidationException(
-                f"Invalid phone number '{to_number}'. Please provide a valid phone number with country code (e.g. +91 98765 43210 or +1 555 234 8901).",
-                code="INVALID_PHONE_NUMBER",
-            )
+        # Per-tenant Hourly Call Quota (Financial Guardrail)
+        quota_key = f"quota:telephony:{owner_id}"
+        call_count = (await default_cache.get(quota_key)) or 0
+        if getattr(settings, "app_env", "development") != "testing":
+            if call_count >= 10:
+                raise RateLimitException(
+                    "Hourly outbound call quota exceeded (maximum 10 calls per hour). Please wait before initiating more live phone calls.",
+                    code="TELEPHONY_HOURLY_QUOTA_EXCEEDED",
+                )
+            await default_cache.set(quota_key, call_count + 1, ttl_seconds=3600.0)
 
         # Path A: ElevenLabs Native Telephony (Fully managed Twilio Conversational AI bridge)
         try:

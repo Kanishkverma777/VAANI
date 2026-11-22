@@ -1,8 +1,10 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from typing import Any, Dict, List, Optional, Tuple
 
 from bson import ObjectId
 
+from app.config import settings
+from app.core.security import redact_pii_for_dpdp
 from app.database import get_collection
 
 
@@ -10,6 +12,8 @@ def _serialize_session(doc: Dict[str, Any]) -> Dict[str, Any]:
     if not doc:
         return doc
     doc["id"] = str(doc.pop("_id"))
+    if "expires_at" in doc and isinstance(doc["expires_at"], datetime):
+        doc["expires_at"] = doc["expires_at"].isoformat()
     return doc
 
 
@@ -27,12 +31,37 @@ class SessionRepository:
             session_dict["created_at"] = now
         session_dict["updated_at"] = now
 
+        # DPDP Act (2023) Section 8(4) - Scrub Indian PII before database persistence
+        if "transcript" in session_dict and isinstance(session_dict["transcript"], list):
+            for turn in session_dict["transcript"]:
+                if isinstance(turn, dict) and "message" in turn and isinstance(turn["message"], str):
+                    turn["message"] = redact_pii_for_dpdp(turn["message"])
+
+        if session_dict.get("summary") and isinstance(session_dict["summary"], str):
+            session_dict["summary"] = redact_pii_for_dpdp(session_dict["summary"])
+
+        # DPDP Act (2023) Section 8(7) - Set TTL expiration date for auto-retention
+        if "expires_at" not in session_dict or not session_dict["expires_at"]:
+            retention_days = getattr(settings, "session_retention_days", 90)
+            session_dict["expires_at"] = datetime.now(timezone.utc) + timedelta(days=retention_days)
+
         provider_conv_id = session_dict["provider_conversation_id"]
         query = {"provider_conversation_id": provider_conv_id}
 
         await self._col().update_one(query, {"$set": session_dict}, upsert=True)
         doc = await self._col().find_one(query)
         return _serialize_session(doc) if doc else session_dict
+
+    async def delete_session(self, session_id: str, owner_id: str) -> bool:
+        """Permanently delete a session record for an owner (DPDP Act Section 12 Right to Erasure)."""
+        query: Dict[str, Any]
+        if ObjectId.is_valid(session_id):
+            query = {"$or": [{"_id": ObjectId(session_id)}, {"_id": session_id}], "owner_id": owner_id}
+        else:
+            query = {"_id": session_id, "owner_id": owner_id}
+
+        res = await self._col().delete_one(query)
+        return res.deleted_count > 0
 
     async def get_by_id(
         self, session_id: str, owner_id: Optional[str] = None

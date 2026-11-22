@@ -65,6 +65,12 @@ export async function fetchSessionDetails(sessionId: string): Promise<Conversati
   return normalizeSession(data);
 }
 
+export async function deleteSession(sessionId: string): Promise<{ status: string; message: string }> {
+  return apiClient<{ status: string; message: string }>(`/api/v1/sessions/${sessionId}`, {
+    method: 'DELETE',
+  });
+}
+
 function normalizeSession(s: any): ConversationSession {
   return {
     session_id: s.id || s.session_id,

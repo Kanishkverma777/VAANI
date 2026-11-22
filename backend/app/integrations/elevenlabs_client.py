@@ -290,6 +290,15 @@ def map_agent_config_to_elevenlabs_payload(name: str, config: AgentConfiguration
             f"Always prioritize speaking natural, polite, and fluent {indian_meta['name']} ({indian_meta['native']}). Keep responses concise (1 to 2 spoken sentences).\n"
         )
 
+    # DPDP Act (2023) Section 6 & 12 Directive
+    dpdp_directive = (
+        "### DATA PRIVACY & CALLER RIGHTS (DPDP ACT 2023)\n"
+        "- The caller has been notified of AI assistance.\n"
+        "- If the caller asks to delete their data, stop recording, or mentions privacy rights, politely assure them that their session data is secured and can be erased from their dashboard at any time.\n"
+        "- Never ask for or store unnecessary sensitive personal identifiers like Aadhaar, PAN, CVV, or passwords.\n"
+    )
+    prompt_sections.append(dpdp_directive)
+
     composite_prompt = "\n".join(prompt_sections)
 
     # Model selection for ElevenLabs Conversational AI
@@ -315,6 +324,31 @@ def map_agent_config_to_elevenlabs_payload(name: str, config: AgentConfiguration
         first_message = f"Hello! Welcome to {name}. How can I assist you today?"
     elif config.language == "es" and not first_message:
         first_message = f"¡Hola! Bienvenido a {name}. ¿En qué puedo ayudarte hoy?"
+
+    # DPDP Act (2023) Section 6 - AI & Quality Recording Pre-call Consent Notice
+    DPDP_CONSENT_PREFIXES = {
+        "hi": "नमस्ते, कृपया ध्यान दें कि यह कॉल एक एआई असिस्टेंट द्वारा संचालित है। ",
+        "hi-en": "Hello, please note this call is assisted by an AI voice agent and may be recorded for quality. ",
+        "en": "Hello, please note this call is assisted by an AI voice agent and may be recorded for quality. ",
+        "ta": "வணக்கம், இந்த அழைப்பு ஒரு AI உதவியாளரால் இயக்கப்படுகிறது என்பதை நினைவில் கொள்ளவும். ",
+        "te": "నమస్కారం, ఈ కాల్ ఒక AI అసిస్టెంట్ ద్వారా నిర్వహించబడుతోందని గమనించండి. ",
+        "bn": "নমস্কার, অনুগ্রহ করে মনে রাখবেন এই কলটি একটি এআই ভয়েস সহকারী দ্বারা পরিচালিত। ",
+        "mr": "नमस्कार, कृपया नोंद घ्या की हा कॉल एका AI व्हॉईस असिस्टंटद्वारे संचालित आहे. ",
+        "gu": "નમસ્તે, કૃપા કરીને નોંધ લેશો કે આ કોલ એક AI સહાયક દ્વારા સંચાલિત છે. ",
+        "kn": "ನಮಸ್ಕಾರ, ಈ ಕರೆ AI ವಾಯ್ಸ್ ಅಸಿಸ್ಟೆಂಟ್ ಮೂಲಕ ನಿರ್ವಹಿಸಲ್ಪಡುತ್ತಿದೆ ಎಂಬುದನ್ನು ಗಮನಿಸಿ. ",
+        "ml": "നമസ്കാരം, ഈ കോൾ ഒരു AI വോയ്‌സ് അസിസ്റ്റന്റാണ് കൈകാര്യം ചെയ്യുന്നതെന്ന് ശ്രദ്ധിക്കുക. ",
+        "pa": "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ, ਕਿਰਪਾ ਕਰਕੇ ਧਿਆਨ ਦਿਓ ਕਿ ਇਹ ਕਾਲ ਇੱਕ AI ਵੌਇਸ ਅਸਿਸਟੈਂਟ ਦੁਆਰਾ ਸੰਚਾਲਿਤ ਹੈ। ",
+        "or": "ନମସ୍କାର, ଦୟାକରି ଧ୍ୟାନ ଦିଅନ୍ତୁ ଏହି କଲ୍ ଏକ AI ସହାୟକ ଦ୍ୱାରା ପରିଚାଳିତ। ",
+        "ur": "السلام علیکم, براہ کرم نوٹ فرمائیں کہ یہ کال ایک AI اسسٹنٹ کے زیر انتظام ہے۔ ",
+    }
+    if getattr(settings, "enable_dpdp_consent_notice", True) and first_message:
+        low_msg = first_message.lower()
+        if not any(k in low_msg for k in ["ai", "एआई", "recorded", "रिकॉर्ड", "privacy", "dpdp"]):
+            prefix = DPDP_CONSENT_PREFIXES.get(
+                config.language,
+                "Hello, please note this call is assisted by an AI voice agent and may be recorded for quality. ",
+            )
+            first_message = f"{prefix}{first_message}"
 
     convai_language = "hi" if config.language == "hi-en" else config.language
 
@@ -479,13 +513,18 @@ class ElevenLabsClient:
 
                 result = []
                 for v in raw_voices:
+                    preview_url = v.get("preview_url")
+                    if not preview_url:
+                        vid = v.get("voice_id", "")
+                        if vid:
+                            preview_url = f"/api/v1/voices/{vid}/preview"
                     result.append(
                         VoiceModel(
                             voice_id=v.get("voice_id", ""),
                             name=v.get("name", "Unnamed Voice"),
                             category=v.get("category"),
                             description=v.get("description"),
-                            preview_url=v.get("preview_url"),
+                            preview_url=preview_url,
                             labels=v.get("labels", {}) or {},
                         )
                     )
@@ -506,6 +545,31 @@ class ElevenLabsClient:
                 "Unable to connect to ElevenLabs to retrieve voices.",
                 code="ELEVENLABS_CONNECTION_ERROR",
             )
+
+    async def get_voice(self, voice_id: str) -> Dict[str, Any]:
+        """Fetch voice details by voice_id from ElevenLabs."""
+        url = f"{self.base_url}/v1/voices/{voice_id}"
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                res = await client.get(url, headers=self._headers())
+                self._handle_response_errors(res)
+                return res.json()
+        except Exception as exc:
+            logger.warning("Failed to retrieve ElevenLabs voice '%s': %s", voice_id, exc)
+            return {}
+
+    async def get_voice_sample_audio(self, voice_id: str, sample_id: str) -> Optional[bytes]:
+        """Fetch raw audio bytes of a voice sample from ElevenLabs."""
+        url = f"{self.base_url}/v1/voices/{voice_id}/samples/{sample_id}/audio"
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                res = await client.get(url, headers=self._headers())
+                if res.status_code == 200:
+                    return res.content
+                return None
+        except Exception as exc:
+            logger.warning("Failed to retrieve sample audio for voice '%s': %s", voice_id, exc)
+            return None
 
     async def create_agent(self, name: str, config: AgentConfiguration) -> str:
         """Create a conversational AI agent on ElevenLabs and return the provider agent ID."""
@@ -672,6 +736,20 @@ class ElevenLabsClient:
                 f"Failed to retrieve conversation details for '{conversation_id}'.",
                 code="ELEVENLABS_CONVERSATION_FAILED",
             )
+
+    async def delete_conversation(self, conversation_id: str) -> bool:
+        """Permanently delete a conversation transcript and audio record from ElevenLabs (DPDP Act Section 12 Right to Erasure)."""
+        url = f"{self.base_url}/v1/convai/conversations/{conversation_id}"
+        try:
+            async with httpx.AsyncClient(timeout=20.0) as client:
+                res = await client.delete(url, headers=self._headers())
+                if res.status_code in (200, 204, 404):
+                    return True
+                self._handle_response_errors(res)
+                return True
+        except Exception as exc:
+            logger.warning("Failed to delete ElevenLabs conversation %s: %s", conversation_id, str(exc))
+            return False
 
     async def list_conversations(self, limit: int = 50) -> List[Dict[str, Any]]:
         """Fetch list of recent conversations from ElevenLabs."""

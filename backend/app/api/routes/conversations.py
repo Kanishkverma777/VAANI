@@ -1,8 +1,10 @@
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Header, Query, status
 
 from app.api.dependencies import get_current_user
+from app.config import settings
+from app.core.exceptions import AuthenticationException, ValidationException
 from app.schemas.analytics import SyncSessionRequest
 from app.schemas.common import PaginatedResponse
 from app.schemas.conversation import SessionDetailResponse
@@ -105,6 +107,20 @@ async def get_session(
     return await service.get_session_by_id(session_id=session_id, owner_id=current_user["id"])
 
 
+@router.delete(
+    "/sessions/{session_id}",
+    status_code=status.HTTP_200_OK,
+    summary="Permanently delete a conversation session (DPDP Act Section 12 Right to Erasure)",
+)
+async def delete_session(
+    session_id: str,
+    current_user: Dict[str, Any] = Depends(get_current_user),
+    service: ConversationService = Depends(get_conversation_service),
+) -> Dict[str, Any]:
+    """Permanently delete session transcripts and metadata satisfying DPDP Act Section 12."""
+    return await service.delete_session(session_id=session_id, owner_id=current_user["id"])
+
+
 @router.post(
     "/conversations/webhook",
     status_code=status.HTTP_200_OK,
@@ -113,6 +129,16 @@ async def get_session(
 async def conversation_webhook(
     payload: Dict[str, Any],
     service: ConversationService = Depends(get_conversation_service),
+    webhook_secret: Optional[str] = Header(None, alias="X-Webhook-Secret"),
 ) -> Dict[str, Any]:
     """Idempotently process conversation events and transcripts from ElevenLabs webhooks."""
+    # Verify webhook secret when configured in environment
+    configured_secret = getattr(settings, "webhook_secret", None)
+    if configured_secret and webhook_secret != configured_secret:
+        raise AuthenticationException("Invalid or missing webhook verification secret.", code="WEBHOOK_AUTH_FAILED")
+
+    # Guard against invalid or empty payload injection
+    if not isinstance(payload, dict) or "conversation_id" not in payload:
+        raise ValidationException("Invalid webhook payload structure: missing conversation_id.", code="INVALID_WEBHOOK_PAYLOAD")
+
     return await service.ingest_webhook_event(payload)

@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from app.core.cache import default_cache
 from app.core.exceptions import NotFoundException, ValidationException
 from app.core.logging import logger
 from app.integrations.elevenlabs_client import ElevenLabsClient, default_elevenlabs_client
@@ -85,14 +86,57 @@ class VoiceService:
             description=description,
         )
         voice_id = res.get("voice_id", "")
+        # Invalidate voice catalog cache so new clone voice appears instantly in listings
+        await default_cache.delete("elevenlabs:voices:catalog")
         return VoiceModel(
             voice_id=voice_id,
             name=name.strip(),
             category="cloned",
             description=description or "Custom cloned voice",
-            preview_url=None,
+            preview_url=f"/api/v1/voices/{voice_id}/preview",
             labels={"cloned": "true"},
         )
+
+    async def get_voice_preview_audio(
+        self, voice_id: str, custom_text: Optional[str] = None
+    ) -> tuple[bytes, str]:
+        """Synthesize and stream a real-time neural speech demonstration using the specified voice."""
+        demo_text = custom_text.strip() if custom_text and custom_text.strip() else (
+            "Namaste! This is an AI generated demonstration using your newly cloned voice on VAANI. "
+            "I can now speak any new sentence on your phone calls and customer conversations."
+        )
+        cache_key = f"voice:preview:synth:{voice_id}:{abs(hash(demo_text)) % 10000000}"
+        cached = await default_cache.get(cache_key)
+        if cached:
+            return cached, "audio/mpeg"
+
+        # 1. Synthesize brand new neural speech using the cloned voice model
+        try:
+            tts_bytes = await self.client.text_to_speech(
+                text=demo_text,
+                voice_id=voice_id,
+                model_id="eleven_multilingual_v2",
+            )
+            if tts_bytes and len(tts_bytes) > 500:
+                await default_cache.set(cache_key, tts_bytes, ttl_seconds=3600.0)
+                return tts_bytes, "audio/mpeg"
+        except Exception as tts_err:
+            logger.warning("Neural speech synthesis failed for voice %s: %s", voice_id, tts_err)
+
+        # 2. Fallback: if TTS quota is hit or unavailable, retrieve uploaded voice sample as safety net
+        try:
+            voice_meta = await self.client.get_voice(voice_id)
+            samples = voice_meta.get("samples") or []
+            if samples:
+                sample_id = samples[0].get("sample_id")
+                if sample_id:
+                    sample_bytes = await self.client.get_voice_sample_audio(voice_id, sample_id)
+                    if sample_bytes and len(sample_bytes) > 500:
+                        return sample_bytes, "audio/mpeg"
+        except Exception as sample_err:
+            logger.warning("Error fetching sample audio for voice %s: %s", voice_id, sample_err)
+
+        raise NotFoundException(f"Audio preview not available for voice '{voice_id}'.", code="PREVIEW_NOT_FOUND")
 
 
 default_voice_service = VoiceService()

@@ -19,10 +19,12 @@ import {
   ChevronRight,
   Mic,
   MessageSquare,
-  Volume2
+  Volume2,
+  Trash2,
+  ShieldCheck
 } from "lucide-react";
 import { fetchAnalyticsOverview } from "@/lib/analytics";
-import { fetchUserSessions } from "@/lib/conversations";
+import { fetchUserSessions, deleteSession } from "@/lib/conversations";
 import { fetchAgents } from "@/lib/agents";
 import { ConversationSession, AnalyticsSummary } from "@/types/session";
 import { AgentRecord } from "@/types/agent";
@@ -812,13 +814,18 @@ export default function MinimalVisualAnalyticsPage() {
             <div>
               <div className="flex items-center justify-between border-b border-white/[0.04] pb-4">
                 <div>
-                  <h3 className="text-sm font-semibold text-white tracking-tight">{selectedSession.agent}</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-sm font-semibold text-white tracking-tight">{selectedSession.agent}</h3>
+                    <span className="inline-flex items-center gap-1 text-[10px] text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20 font-mono">
+                      <ShieldCheck className="size-3" /> DPDP
+                    </span>
+                  </div>
                   <p className="text-xs text-zinc-400">{selectedSession.caller} · {selectedSession.timeAgo}</p>
                 </div>
                 <button
                   type="button"
                   onClick={() => setSelectedSession(null)}
-                  className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-[#1c1c20] transition-colors"
+                  className="p-1.5 rounded-xl text-zinc-400 hover:text-white hover:bg-[#1c1c20] transition-colors cursor-pointer"
                 >
                   <X className="size-4" />
                 </button>
@@ -892,13 +899,32 @@ export default function MinimalVisualAnalyticsPage() {
               </div>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setSelectedSession(null)}
-              className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-xs font-semibold text-black transition-colors"
-            >
-              Close
-            </button>
+            <div className="pt-4 border-t border-white/[0.04] space-y-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm("Permanently erase all transcripts, metrics, and recordings for this session in compliance with DPDP Act Section 12 (Right to Erasure)?")) return;
+                  try {
+                    await deleteSession(selectedSession.id);
+                    setRealSessions((prev) => prev.filter((s) => s.id !== selectedSession.id));
+                    setSelectedSession(null);
+                  } catch (err) {
+                    alert("Failed to erase session: " + String(err));
+                  }
+                }}
+                className="w-full py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-400 border border-red-500/20 flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <Trash2 className="size-3.5" />
+                Erase Session (DPDP Sec 12)
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedSession(null)}
+                className="w-full py-2.5 rounded-xl bg-white hover:bg-zinc-200 text-xs font-semibold text-black transition-colors cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
       )}

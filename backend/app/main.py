@@ -40,11 +40,16 @@ def create_app() -> FastAPI:
         lifespan=lifespan,
     )
 
-    # CORS configuration
+    # Secure CORS configuration: restrict origins to whitelisted domains and project-specific previews
+    preview_origin_regex = (
+        r"https://(vaani|voiceforge)[a-zA-Z0-9-]*\.vercel\.app"
+        if settings.app_env != "production"
+        else None
+    )
     app.add_middleware(
         CORSMiddleware,
         allow_origins=settings.allowed_origins,
-        allow_origin_regex=r"https://.*\.vercel\.app",
+        allow_origin_regex=preview_origin_regex,
         allow_credentials=True,
         allow_methods=["*"],
         allow_headers=["*"],

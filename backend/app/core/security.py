@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+import re
 from typing import Any, Dict, Optional
 
 import bcrypt
@@ -107,3 +108,29 @@ def verify_firebase_id_token(id_token: str, project_id: Optional[str] = None) ->
         raise AuthenticationException(
             f"Invalid Firebase ID token: {str(exc)}", code="FIREBASE_TOKEN_INVALID"
         )
+
+
+# DPDP Act (2023) Section 8(4) - India PII Redaction Regexes
+RE_CARD = re.compile(r"\b(?:\d{4}[-\s]?){3}\d{1,7}\b")
+RE_AADHAAR = re.compile(r"(?<!\d)[2-9]\d{3}[-\s]?\d{4}[-\s]?\d{4}(?!\d|[-\s]\d)")
+RE_PAN = re.compile(r"\b[A-Z]{5}[0-9]{4}[A-Z]\b")
+RE_UPI = re.compile(
+    r"\b[a-zA-Z0-9.\-_]{2,256}@(okhdfcbank|okaxis|oksbi|paytm|ybl|apl|ibl|axl|sbi|hdfcbank|icici)\b",
+    re.IGNORECASE,
+)
+
+
+def redact_pii_for_dpdp(text: str) -> str:
+    """
+    Scrub and redact sensitive Indian personal identifiers (Payment Cards, Aadhaar, PAN, UPI)
+    prior to permanent database persistence, satisfying DPDP Act (2023) Section 8(4).
+    """
+    if not text:
+        return ""
+    # Process card numbers (13-19 digits) before 12-digit Aadhaar to avoid sub-matching
+    scrubbed = RE_CARD.sub("[REDACTED_CARD]", text)
+    scrubbed = RE_AADHAAR.sub("[REDACTED_AADHAAR]", scrubbed)
+    scrubbed = RE_PAN.sub("[REDACTED_PAN]", scrubbed)
+    scrubbed = RE_UPI.sub("[REDACTED_UPI]", scrubbed)
+    return scrubbed
+

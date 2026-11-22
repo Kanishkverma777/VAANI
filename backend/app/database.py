@@ -74,6 +74,8 @@ async def _create_indexes(db: AsyncDatabase) -> None:
         await db["sessions"].create_index([("owner_id", ASCENDING), ("started_at", DESCENDING)])
         await db["sessions"].create_index([("owner_id", ASCENDING), ("status", ASCENDING)])
         await db["sessions"].create_index([("provider_conversation_id", ASCENDING)], sparse=True)
+        # DPDP Act (2023) Section 8(7) - Automated TTL Retention Index
+        await db["sessions"].create_index([("expires_at", ASCENDING)], expireAfterSeconds=0)
 
         # Knowledge Sources collection
         await db["knowledge_sources"].create_index(

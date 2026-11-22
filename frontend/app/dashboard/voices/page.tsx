@@ -40,13 +40,23 @@ export default function VoiceLibraryPage() {
       audioObj.pause();
     }
 
-    if (voice.preview_url) {
-      const audio = new Audio(voice.preview_url);
-      audio.onended = () => setPlayingVoiceId(null);
-      audio.play().catch(() => {});
-      setAudioObj(audio);
-      setPlayingVoiceId(voice.voice_id);
-    }
+    const rawUrl = voice.preview_url || `/api/v1/voices/${voice.voice_id}/preview`;
+    const resolvedUrl = rawUrl.startsWith('http')
+      ? rawUrl
+      : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}${rawUrl}`;
+
+    const audio = new Audio(resolvedUrl);
+    audio.onended = () => setPlayingVoiceId(null);
+    audio.onerror = (e) => {
+      console.warn('Audio playback error:', e);
+      setPlayingVoiceId(null);
+    };
+    audio.play().catch((err) => {
+      console.warn('Audio play blocked or failed:', err);
+      setPlayingVoiceId(null);
+    });
+    setAudioObj(audio);
+    setPlayingVoiceId(voice.voice_id);
   };
 
   const handleCloneVoice = async (e: React.FormEvent) => {

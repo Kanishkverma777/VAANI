@@ -263,6 +263,37 @@ class ConversationService:
             )
         return self._to_response(session)
 
+    async def delete_session(self, session_id: str, owner_id: str) -> Dict[str, Any]:
+        """Permanently delete a conversation session and associated audio/transcripts (DPDP Act Section 12)."""
+        session = await self.session_repo.get_by_id(session_id, owner_id=owner_id)
+        if not session:
+            raise NotFoundException(
+                f"Session '{session_id}' was not found.", code="SESSION_NOT_FOUND"
+            )
+
+        provider_conv_id = session.get("provider_conversation_id")
+        if provider_conv_id:
+            try:
+                await self.client.delete_conversation(provider_conv_id)
+            except Exception as exc:
+                logger.warning("Failed to delete remote conversation %s from ElevenLabs: %s", provider_conv_id, str(exc))
+
+        deleted = await self.session_repo.delete_session(session_id, owner_id=owner_id)
+        if not deleted:
+            raise NotFoundException(
+                f"Session '{session_id}' could not be deleted.", code="SESSION_DELETE_FAILED"
+            )
+
+        # Clear session and analytics caches
+        await default_cache.clear_prefix(f"sessions:user:{owner_id}")
+        await default_cache.delete(f"analytics:overview:{owner_id}")
+
+        return {
+            "status": "deleted",
+            "session_id": session_id,
+            "message": "Session and personal data successfully erased in compliance with DPDP Act (2023) Section 12.",
+        }
+
     def _to_response(self, doc: Dict[str, Any]) -> SessionDetailResponse:
         return SessionDetailResponse(
             id=str(doc.get("id") or doc.get("_id")),

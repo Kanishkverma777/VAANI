@@ -71,12 +71,34 @@ class SemanticFastEmbedder:
 
 
 _fast_embedder = SemanticFastEmbedder(dimension=settings.embedding_dimension)
+_transformer_model = None
+_transformer_initialized = False
+
+
+def _get_sentence_transformer():
+    """Lazy-load the official Hugging Face SentenceTransformer model if available."""
+    global _transformer_model, _transformer_initialized
+    if not _transformer_initialized:
+        _transformer_initialized = True
+        try:
+            from sentence_transformers import SentenceTransformer
+
+            logger.info("Initializing SentenceTransformer with model '%s'...", settings.embedding_model)
+            _transformer_model = SentenceTransformer(settings.embedding_model)
+            logger.info("SentenceTransformer successfully loaded.")
+        except Exception as exc:
+            logger.warning(
+                "Could not load SentenceTransformer (%s). Falling back to SemanticFastEmbedder.",
+                str(exc),
+            )
+            _transformer_model = None
+    return _transformer_model
 
 
 def generate_embeddings(texts: List[str]) -> List[List[float]]:
     """
-    Generate 384-dimensional dense embeddings with chunk caching and zero memory overhead.
-    Eliminates PyTorch 400MB RAM spikes on cloud hosts like Render free tier.
+    Generate 384-dimensional dense embeddings using SentenceTransformer (all-MiniLM-L6-v2)
+    with chunk caching and seamless fallback to SemanticFastEmbedder in low-memory environments.
     """
     if not texts:
         return []
@@ -94,12 +116,34 @@ def generate_embeddings(texts: List[str]) -> List[List[float]]:
             missing_indices.append(idx)
             missing_texts.append(text)
 
-    # Encode remaining un-cached texts with fast semantic embedder
+    # Encode remaining un-cached texts
     if missing_texts:
-        for i, idx in enumerate(missing_indices):
-            emb = _fast_embedder.embed_single(missing_texts[i])
-            results[idx] = emb
-            if len(_embedding_cache) < MAX_EMBEDDING_CACHE_SIZE:
-                _embedding_cache[_compute_chunk_hash(missing_texts[i])] = emb
+        model = _get_sentence_transformer()
+        if model is not None:
+            try:
+                raw_embeddings = model.encode(
+                    missing_texts,
+                    batch_size=32,
+                    show_progress_bar=False,
+                    normalize_embeddings=True,
+                )
+                for i, idx in enumerate(missing_indices):
+                    emb = [round(float(val), 6) for val in raw_embeddings[i]]
+                    results[idx] = emb
+                    if len(_embedding_cache) < MAX_EMBEDDING_CACHE_SIZE:
+                        _embedding_cache[_compute_chunk_hash(missing_texts[i])] = emb
+            except Exception as encode_err:
+                logger.warning(
+                    "SentenceTransformer encoding error (%s). Using SemanticFastEmbedder fallback.",
+                    str(encode_err),
+                )
+                model = None
+
+        if model is None:
+            for i, idx in enumerate(missing_indices):
+                emb = _fast_embedder.embed_single(missing_texts[i])
+                results[idx] = emb
+                if len(_embedding_cache) < MAX_EMBEDDING_CACHE_SIZE:
+                    _embedding_cache[_compute_chunk_hash(missing_texts[i])] = emb
 
     return [r for r in results if r is not None]
